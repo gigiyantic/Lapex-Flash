@@ -1,0 +1,33 @@
+{
+  "name": "Apex Executor",
+  "description": "Execute Anonymous Apex — reads your Salesforce session automatically, no login needed",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "author": "Laxman Patel · NBX",
+
+  "action": {
+    "default_title": "Open Apex Executor"
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+
+  "permissions": [
+    "cookies",
+    "tabs",
+    "storage",
+    "sidePanel"
+  ],
+
+  "host_permissions": [
+    "https://*.salesforce.com/*",
+    "https://*.force.com/*",
+    "https://*.my.salesforce.com/*",
+    "https://*.lightning.force.com/*"
+  ]
+}
