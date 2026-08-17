@@ -1,6 +1,6 @@
-# ⚡ Apex Flash — Salesforce Developer Studio
+# ⚡ Lapex Flash — Salesforce Developer Studio
 
-**Apex Flash** is a lightweight, ultra-fast, local developer studio for executing Anonymous Apex and running SOQL queries directly against any Salesforce org via Session ID or Username/Password.
+**Lapex Flash** is a lightweight, ultra-fast, local developer studio for executing Anonymous Apex and running SOQL queries directly against any Salesforce org via Session ID or Username/Password.
 
 ## 🚀 Features
 

@@ -1,10 +1,10 @@
 @echo off
-title Apex Executor Server
+title Lapex Flash Server
 color 0A
 cd /d "%~dp0"
 echo.
 echo  ╔══════════════════════════════════════════════════════╗
-echo  ║           APEX EXECUTOR — Starting Server            ║
+echo  ║           LAPEX FLASH — Starting Server              ║
 echo  ╚══════════════════════════════════════════════════════╝
 echo.
 

@@ -1,12 +1,12 @@
 {
-  "name": "Apex Executor",
-  "description": "Execute Anonymous Apex — reads your Salesforce session automatically, no login needed",
+  "name": "Lapex Flash",
+  "description": "Execute Anonymous Apex & SOQL — reads your Salesforce session automatically, no login needed",
   "version": "1.0.0",
   "manifest_version": 3,
   "author": "Laxman Patel · NBX",
 
   "action": {
-    "default_title": "Open Apex Executor"
+    "default_title": "Open Lapex Flash"
   },
 
   "background": {
@@ -15,6 +15,25 @@
 
   "side_panel": {
     "default_path": "panel.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*",
+        "file://*apex-executor.html*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3000/*",
+      "http://127.0.0.1:3000/*"
+    ]
   },
 
   "permissions": [

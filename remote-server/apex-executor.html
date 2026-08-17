@@ -204,8 +204,6 @@
     .tab-item.dirty .tab-dot { opacity:1; }
     .tab-x { flex-shrink:0; width:16px; height:16px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text3); background:transparent; border:none; cursor:pointer; transition:all .15s; padding:0; }
     .tab-x:hover { background:rgba(220,38,38,0.15); color:var(--red); }
-    .btn-del-item { background:transparent; border:none; color:var(--text3); cursor:pointer; padding:2px 5px; font-size:11px; border-radius:3px; transition:all .15s ease; line-height:1; }
-    .btn-del-item:hover { background:var(--red-dim); color:var(--red); }
     .tab-add { display:flex; align-items:center; justify-content:center; width:30px; background:#ffffff; border:1px dashed var(--border2); border-bottom:none; border-radius:var(--r) var(--r) 0 0; cursor:pointer; font-size:18px; color:var(--text3); transition:all .15s; align-self:stretch; }
     .tab-add:hover { color:var(--blue); border-color:rgba(2,132,199,0.35); background:var(--blue-dim); }
 
@@ -229,7 +227,7 @@
     .btn-ghost { background:#ffffff; color:var(--text2); border:1px solid var(--border2); }
     .btn-ghost:hover { background:#f1f5f9; color:var(--text); border-color:var(--border2); }
     .btn-exec { background:linear-gradient(135deg,var(--blue),#0369a1); color:#fff; box-shadow:0 2px 12px rgba(2,132,199,0.3); padding:7px 20px; font-size:13px; }
-    .btn-exec:hover { transform:translateY(-1px); box-shadow:0 4px 18px rgba(2,132,199,0.45); }
+    .btn-exec:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(2,132,199,0.45); }
     .btn-exec:disabled { opacity:.4; cursor:not-allowed; transform:none !important; box-shadow:none; }
     .btn-dl { background:var(--green-dim); color:var(--green); border:1px solid rgba(22,163,74,0.25); }
     .btn-dl:hover { background:rgba(22,163,74,0.18); }
@@ -313,9 +311,6 @@
   </div>
 </header>
 
-<!-- ══════════════════════════════════════════════
-     LOGIN SCREEN
-══════════════════════════════════════════════ -->
 <div id="screen-login" class="screen active">
   <div class="login-card">
     <div class="login-logo">
@@ -334,9 +329,6 @@
     </div>
 
     <div id="panel-sid">
-      <button class="btn btn-ghost" style="width:100%;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--blue);color:var(--blue);background:var(--blue-dim);font-weight:600;padding:10px;" onclick="autoDetectSessionFromTab()">
-        ⚡ Auto-Detect Session from Active Tab
-      </button>
       <div class="form-group">
         <label for="sid-inst">Instance URL</label>
         <input id="sid-inst" class="form-input" type="text" placeholder="https://yourorg.my.salesforce.com" spellcheck="false" />
@@ -376,26 +368,11 @@
         <span id="login-btn-content">🔐 Log in to Salesforce</span>
       </button>
     </div>
-
-    <!-- Recent Sessions Container -->
-    <div id="recent-sessions-wrap" style="margin-top:20px;display:none;border-top:1px solid var(--border);padding-top:14px;">
-      <div style="font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
-        <span>⚡ Recent Sessions (1-Click Reconnect)</span>
-        <button class="btn-del-item" onclick="clearRecentSessions()" title="Clear Recent Sessions">Clear All</button>
-      </div>
-      <div id="recent-sessions-list" style="display:flex;flex-direction:column;gap:6px;"></div>
-    </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     EXECUTE & QUERY MAIN SCREEN
-══════════════════════════════════════════════ -->
 <div id="screen-exec" class="screen">
-
   <div class="main-container">
-
-    <!-- Left Sidebar History -->
     <aside class="sidebar" id="sidebar-panel">
       <div class="sidebar-head">
         <span class="sidebar-title">📜 History</span>
@@ -404,43 +381,33 @@
       <div class="sidebar-search">
         <input id="history-search" class="sidebar-input" type="text" placeholder="Search history..." oninput="renderSidebarHistory()" />
       </div>
-      <div class="sidebar-list" id="sidebar-list">
-        <!-- Rendered dynamically -->
-      </div>
+      <div class="sidebar-list" id="sidebar-list"></div>
     </aside>
 
-    <!-- Workspace -->
     <div class="workspace">
-
-      <!-- Mode Switcher -->
       <div class="mode-bar">
         <button id="mode-apex" class="mode-btn active" onclick="switchMode('apex')">⚡ Apex Execute</button>
         <button id="mode-soql" class="mode-btn" onclick="switchMode('soql')">🔍 SOQL Query Runner</button>
         <button id="mode-fieldperm" class="mode-btn" onclick="switchMode('fieldperm')">🛡️ Field Permissions</button>
       </div>
 
-      <!-- Recent Query Chips (SOQL mode) -->
       <div class="recent-chips" id="recent-chips" style="display:none; align-items: center;">
         <span style="font-size:11px;color:var(--text3);font-weight:600;">Recent:</span>
         <div id="chips-list" style="display:flex;gap:5px;overflow-x:auto;flex:1;"></div>
         <span id="soql-object-label" style="font-size:11.5px;color:var(--blue);font-weight:600;margin-left:auto;display:none;padding:4px 10px;background:var(--blue-dim);border-radius:12px;border:1px solid rgba(2,132,199,0.2);white-space:nowrap;"></span>
       </div>
 
-      <!-- Tabs -->
       <div class="tab-bar" id="tab-bar">
         <button class="tab-add" id="btn-add-tab" onclick="addTab()" title="New tab">+</button>
       </div>
 
-      <!-- Editor Card -->
       <div class="editor-card">
         <div class="editor-wrap">
           <div class="gutter" id="gutter">1</div>
-          <textarea id="code-ta" class="code-ta" spellcheck="false" autocorrect="off" autocomplete="off"
-            placeholder="// Enter Apex code to execute..."></textarea>
+          <textarea id="code-ta" class="code-ta" spellcheck="false" autocorrect="off" autocomplete="off" placeholder="// Enter Apex code to execute..."></textarea>
         </div>
 
         <div class="cfg-row">
-          <!-- Apex Config -->
           <div id="cfg-apex" style="display:flex;align-items:center;gap:10px;">
             <div class="cfg-grp">
               <label for="LogCategory">Category:</label>
@@ -467,7 +434,6 @@
             </div>
           </div>
 
-          <!-- SOQL Config -->
           <div id="cfg-soql" style="display:none;align-items:center;gap:10px;">
             <label style="font-size:11.5px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px;">
               <input type="checkbox" id="chk-tooling" /> Tooling API
@@ -475,7 +441,6 @@
             <button class="btn btn-ghost btn-sm" onclick="formatSOQL()">✨ Format SOQL</button>
           </div>
 
-          <!-- Field Perm Config -->
           <div id="cfg-fieldperm" style="display:none;align-items:center;gap:10px;">
             <div class="cfg-grp">
               <label for="fp-sobject">Object:</label>
@@ -505,7 +470,6 @@
         </div>
       </div>
 
-      <!-- Output Section -->
       <div class="out-section">
         <div class="out-tabs">
           <button class="out-tab active" id="ot-log"  onclick="switchOutTab('log')">Results / Log</button>
@@ -518,10 +482,7 @@
               <span class="out-meta"  id="out-meta"></span>
             </div>
             <div class="out-acts">
-              <!-- Export Options -->
-              <div id="soql-exports" style="display:none;gap:4px;align-items:center;">
-                <button class="btn btn-exec btn-sm" onclick="runBulkExport()" title="Fastest export for 50M+ records via Salesforce Bulk API 2.0">🚀 Bulk 2.0 Export</button>
-                <button class="btn btn-ghost btn-sm" onclick="runParallelExport()" style="border-color:rgba(234,179,8,0.4);color:var(--yellow);" title="Multi-threaded parallel worker extraction">⚡ Parallel Export</button>
+              <div id="soql-exports" style="display:none;gap:4px;">
                 <button class="btn btn-ghost btn-sm" onclick="copyAsApex()">📋 Copy as Apex</button>
                 <button class="btn btn-ghost btn-sm" onclick="copyAscURL()">📋 Copy as cURL</button>
                 <button class="btn btn-ghost btn-sm" onclick="copyAsMarkdown()">📋 Copy as MD</button>
@@ -537,193 +498,15 @@
           </div>
         </div>
       </div>
-
-    </div><!-- /workspace -->
-
-  </div><!-- /main-container -->
-</div>
-
-<!-- ══════════════════════════════════════════════
-     HISTORY MANAGEMENT MODAL
-══════════════════════════════════════════════ -->
-<div class="modal-overlay" id="history-modal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h3>📜 History Management</h3>
-      <button class="btn btn-ghost btn-xs" onclick="closeHistoryModal()">✕</button>
-    </div>
-    <div style="padding:10px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;">
-      <input id="modal-search" class="sidebar-input" style="flex:1;" type="text" placeholder="Filter history..." oninput="renderModalHistory()" />
-      <button class="btn btn-ghost btn-sm" onclick="exportHistoryJson()">⬇ Export JSON</button>
-      <button class="btn btn-danger-sm btn-sm" onclick="clearAllHistory()">🗑️ Clear All</button>
-    </div>
-    <div class="modal-body" id="modal-history-list">
-      <!-- Dynamic list -->
-    </div>
-  </div>
-</div>
-
-<!-- ══════════════════════════════════════════════
-     SAVED LOGS MODAL (SERVER LOGS FOLDER)
-══════════════════════════════════════════════ -->
-<div class="modal-overlay" id="saved-logs-modal">
-  <div class="modal-card">
-    <div class="modal-head">
-      <h3>📂 Server Saved Logs Folder</h3>
-      <button class="btn btn-ghost btn-xs" onclick="closeSavedLogsModal()">✕</button>
-    </div>
-    <div style="padding:10px 18px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text2);display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <span>Server folder: <code style="color:var(--green);" id="logs-folder-path">.../RedLine/logs</code></span>
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button class="btn btn-ghost btn-xs" onclick="fetchSavedLogs()">🔄 Refresh</button>
-        <button class="btn btn-danger-sm btn-xs" onclick="deleteAllSavedLogs()">🗑️ Clear All Logs</button>
-      </div>
-    </div>
-    <div class="modal-body" id="saved-logs-list">
-      <!-- Dynamic list from GET /saved-logs -->
     </div>
   </div>
 </div>
 
 <script>
 const SERVER = (window.location.protocol === 'file:') ? 'http://localhost:3000' : '';
-
-/* ── State ── */
-let currentMode = 'apex'; // 'apex' or 'soql'
+let currentMode = 'apex';
 let session = { sessionId: null, instanceUrl: null, userName: null, orgName: null, displayName: null };
 let historyList = [];
-
-/* ── Recent & Auto Sessions ── */
-function saveRecentSession(s) {
-  if (!s || !s.sessionId || !s.instanceUrl) return;
-  try {
-    let list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
-    list = list.filter(item => item.instanceUrl !== s.instanceUrl || item.sessionId !== s.sessionId);
-    list.unshift({
-      sessionId: s.sessionId,
-      instanceUrl: s.instanceUrl,
-      userName: s.userName || s.displayName || 'Connected User',
-      orgName: s.orgName || '',
-      timestamp: new Date().toISOString()
-    });
-    localStorage.setItem('sf_recent_sessions', JSON.stringify(list.slice(0, 8)));
-    renderRecentSessions();
-  } catch(_) {}
-}
-
-function renderRecentSessions() {
-  const wrap = document.getElementById('recent-sessions-wrap');
-  const listEl = document.getElementById('recent-sessions-list');
-  if (!wrap || !listEl) return;
-  try {
-    const list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
-    if (!list || list.length === 0) {
-      wrap.style.display = 'none';
-      return;
-    }
-    wrap.style.display = 'block';
-    listEl.innerHTML = '';
-    list.forEach((item, idx) => {
-      const card = document.createElement('div');
-      card.className = 'sidebar-item';
-      card.style.padding = '8px 10px';
-      card.style.border = '1px solid var(--border)';
-      card.style.borderRadius = '6px';
-      card.style.background = 'var(--panel2)';
-      card.style.cursor = 'pointer';
-      const host = item.instanceUrl.replace(/^https?:\/\//, '');
-      const timeAgo = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
-      card.innerHTML = `
-        <div class="si-top" style="margin-bottom:2px;">
-          <span style="font-size:11.5px;font-weight:600;color:var(--text);">${esc(item.userName)}</span>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span class="si-ts">${timeAgo}</span>
-            <button class="btn-del-item" title="Remove from recents" onclick="removeRecentSession(${idx}, event)">✕</button>
-          </div>
-        </div>
-        <div style="font-size:10.5px;color:var(--blue);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-          🔗 ${esc(host)}
-        </div>
-      `;
-      card.addEventListener('click', () => useRecentSession(idx));
-      listEl.appendChild(card);
-    });
-  } catch(_) {}
-}
-
-function useRecentSession(idx) {
-  try {
-    const list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
-    const item = list[idx];
-    if (!item) return;
-    document.getElementById('sid-inst').value = item.instanceUrl;
-    document.getElementById('sid-val').value  = item.sessionId;
-    switchLoginTab('sid');
-    doSidLogin();
-  } catch(_) {}
-}
-
-function removeRecentSession(idx, e) {
-  if (e) e.stopPropagation();
-  try {
-    let list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
-    list.splice(idx, 1);
-    localStorage.setItem('sf_recent_sessions', JSON.stringify(list));
-    renderRecentSessions();
-  } catch(_) {}
-}
-
-function clearRecentSessions() {
-  localStorage.removeItem('sf_recent_sessions');
-  renderRecentSessions();
-}
-
-async function autoDetectSessionFromTab() {
-  const errEl = document.getElementById('login-error');
-  errEl.className = 'login-error';
-  errEl.style.display = 'none';
-
-  // 1. Check Chrome Extension messaging if running inside Chrome with extension
-  if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
-    try {
-      chrome.runtime.sendMessage({ type: 'GET_SESSION' }, (resp) => {
-        if (resp && resp.found && resp.sessionId && resp.instanceUrl) {
-          document.getElementById('sid-inst').value = resp.instanceUrl;
-          document.getElementById('sid-val').value  = resp.sessionId;
-          switchLoginTab('sid');
-          doSidLogin();
-          return;
-        }
-      });
-    } catch(_) {}
-  }
-
-  // 2. Try reading clipboard for sid
-  try {
-    const text = await navigator.clipboard.readText();
-    if (text && text.trim()) {
-      const clean = text.trim().replace(/^["']|["']$/g, '');
-      if (clean.startsWith('00D') || clean.length > 40) {
-        document.getElementById('sid-val').value = clean;
-        errEl.textContent = '⚡ Pasted Session ID from clipboard! Enter Instance URL if needed and click Connect.';
-        errEl.className = 'login-error show';
-        errEl.style.display = 'block';
-        errEl.style.background = 'var(--blue-dim)';
-        errEl.style.color = 'var(--blue)';
-        errEl.style.borderColor = 'rgba(2,132,199,0.3)';
-        return;
-      }
-    }
-  } catch(_) {}
-
-  // 3. Fallback guidance
-  errEl.textContent = '💡 Tip: Open Salesforce in a browser tab and use the Lapex Flash Chrome Extension side panel for 1-click zero-login auto session detection!';
-  errEl.className = 'login-error show';
-  errEl.style.display = 'block';
-  errEl.style.background = 'var(--blue-dim)';
-  errEl.style.color = 'var(--blue)';
-  errEl.style.borderColor = 'rgba(2,132,199,0.3)';
-}
 
 function loadSession() {
   try {
@@ -761,7 +544,6 @@ function addHistoryItem(item) {
   saveHistory();
 }
 
-/* ── Login Handlers ── */
 function switchLoginTab(type) {
   const isSid = type === 'sid';
   document.getElementById('panel-sid').style.display  = isSid ? 'block' : 'none';
@@ -806,10 +588,9 @@ async function doSidLogin() {
     }
     session = { sessionId: sid, instanceUrl: instUrl, userName: data.name || data.email || 'Connected User', orgName: data.orgId || '', displayName: data.name || data.email || 'Connected User' };
     saveSession();
-    saveRecentSession(session);
     showExecScreen();
   } catch(e) {
-    errEl.textContent = '❌ Cannot reach local server (http://localhost:3000). Make sure server is running!';
+    errEl.textContent = '❌ Cannot reach server. Make sure server is running!';
     errEl.className = 'login-error show';
     errEl.style.display = 'block';
   } finally {
@@ -849,7 +630,6 @@ async function doLogin() {
     }
     session = { sessionId: data.sessionId, instanceUrl: data.instanceUrl, userName: data.userName, orgName: data.orgName, displayName: data.displayName || data.userName };
     saveSession();
-    saveRecentSession(session);
     showExecScreen();
   } catch(e) {
     errEl.textContent = '❌ ' + e.message;
@@ -861,9 +641,8 @@ async function doLogin() {
 }
 
 async function doLogout() {
-  clearSession();
-  showLoginScreen();
-  renderRecentSessions();
+  try { await fetch('/logout', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ sessionId:session.sessionId, instanceUrl:session.instanceUrl }) }); } catch(_) {}
+  clearSession(); showLoginScreen();
 }
 
 function showExecScreen() {
@@ -897,9 +676,7 @@ function showLoginScreen() {
   if (loBtn) loBtn.style.display = 'none';
 }
 
-/* ── Mode Switcher ── */
 function switchMode(mode) {
-  // Save active code in current workspace tab before switching
   const oldWS = getWS();
   if (oldWS && oldWS.activeTabId && oldWS.tabs[oldWS.activeTabId]) {
     oldWS.tabs[oldWS.activeTabId].code = ta().value;
@@ -928,14 +705,13 @@ function switchMode(mode) {
   }
 
   const newWS = getWS();
-  if (!newWS) return; // For fieldperm we might not need tabs, but let's just clear editor
+  if (!newWS) return;
   if (!newWS.activeTabId || !newWS.tabs[newWS.activeTabId]) {
     const id = createTab(mode);
     newWS.activeTabId = id;
   }
 
-  switchTab(newWS.activeTabId, true /* isModeSwitch */);
-  // Clear text area when switching tabs (as requested by user)
+  switchTab(newWS.activeTabId, true);
   if (cmEditor && mode !== 'fieldperm') {
     cmEditor.setValue('');
     setTimeout(() => { cmEditor.refresh(); }, 150);
@@ -949,7 +725,6 @@ function runCurrent() {
   else if (currentMode === 'fieldperm') checkFieldPerms();
 }
 
-/* ── SOQL Runner & Formatter ── */
 function formatSOQL() {
   let q = ta().value;
   if (!q.trim()) return;
@@ -1063,7 +838,6 @@ function downloadCSV() {
   triggerDownload(csv, `query_export_${Date.now()}.csv`);
 }
 
-/* ── Apex Execution (Auto-download disabled) ── */
 async function executeApex() {
   const code = ta().value.trim();
   if (!code) { ta().focus(); return; }
@@ -1113,7 +887,6 @@ async function executeApex() {
   } finally { btn.disabled = false; }
 }
 
-/* ── Separate Workspaces Management ── */
 const workspaces = {
   apex: { tabs: {}, activeTabId: null, counter: 1, defaultPrefix: 'Script ' },
   soql: { tabs: {}, activeTabId: null, counter: 1, defaultPrefix: 'Query ' },
@@ -1204,7 +977,7 @@ function addTab() {
 function closeTab(id) {
   const ws = getWS();
   const k = Object.keys(ws.tabs);
-  if (k.length === 1) return; // Keep at least 1 tab open
+  if (k.length === 1) return;
   delete ws.tabs[id];
   if (ws.activeTabId === id) {
     const remaining = Object.keys(ws.tabs).map(Number);
@@ -1215,7 +988,6 @@ function closeTab(id) {
   }
 }
 
-/* ── Editor Helpers ── */
 let cmEditor = null;
 
 function getCodeValue() {
@@ -1294,7 +1066,6 @@ async function updateSoqlLabel() {
   }
 }
 
-/* ── Output Rendering ── */
 let currentOutTab = 'log';
 function switchOutTab(tab) {
   currentOutTab = tab;
@@ -1318,19 +1089,7 @@ function renderSOQLTable(data) {
   }
 
   const keys = Object.keys(data.records[0]).filter(k => k !== 'attributes');
-  const hasNext = !!data.nextRecordsUrl;
-  const isLarge = data.totalSize > 50000;
-
-  let html = `<div style="margin-bottom:8px;font-size:11px;color:var(--text2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-    <span>Showing <b>${data.records.length.toLocaleString()}</b> of <b>${data.totalSize.toLocaleString()}</b> total records found in Salesforce</span>
-    ${hasNext ? `<button class="btn btn-ghost btn-xs" onclick="fetchNextBatch()" style="color:var(--blue);border-color:rgba(2,132,199,0.3);">⏩ Fetch Next Batch (2,000 records)</button>` : ''}
-  </div>`;
-
-  if (isLarge && data.records.length === 2000) {
-    html += `<div class="banner b-info" style="margin-bottom:8px;font-size:11px;">ℹ️ Large Query Alert: Found <b>${data.totalSize.toLocaleString()}</b> records. Loaded initial batch of 2,000 records. Use <b>Fetch Next Batch</b> or export to CSV to process more.</div>`;
-  }
-
-  html += `<div class="result-table-wrap"><table class="data-table"><thead><tr><th>#</th>`;
+  let html = `<div style="margin-bottom:8px;font-size:11px;color:var(--text2)">Showing ${data.records.length} of ${data.totalSize} records</div><div class="result-table-wrap"><table class="data-table"><thead><tr><th>#</th>`;
   keys.forEach(k => html += `<th>${esc(k)}</th>`);
   html += `</tr></thead><tbody>`;
 
@@ -1344,155 +1103,6 @@ function renderSOQLTable(data) {
   });
   html += `</tbody></table></div>`;
   body.innerHTML = html;
-}
-
-async function fetchNextBatch() {
-  const tab = getActiveTab();
-  if (!tab || !tab.output || !tab.output.raw || !tab.output.raw.nextRecordsUrl) return;
-
-  const btn = document.querySelector('#out-body button');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Fetching next batch…'; }
-
-  try {
-    const r = await fetch(`${SERVER}/query/next`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        nextRecordsUrl: tab.output.raw.nextRecordsUrl,
-        sessionId: session.sessionId,
-        instanceUrl: session.instanceUrl
-      })
-    });
-    const data = await r.json();
-    if (data.error) { alert('Failed to fetch next batch: ' + data.error); return; }
-
-    tab.output.raw.records = (tab.output.raw.records || []).concat(data.records || []);
-    tab.output.raw.nextRecordsUrl = data.nextRecordsUrl || null;
-    tab.output.raw.done = data.done ?? true;
-
-    renderResultsTable(tab.output.raw);
-  } catch(err) {
-    alert('Error fetching next batch: ' + err.message);
-  }
-}
-
-/* ── Strategy 1: Bulk API 2.0 Export (50M+ Records) ── */
-async function runBulkExport() {
-  const query = ta().value.trim();
-  if (!query) { alert('Please enter a SOQL query first'); return; }
-  if (!session.sessionId) { alert('Not connected to Salesforce'); return; }
-
-  const body = document.getElementById('out-body');
-  body.innerHTML = `
-    <div class="banner b-info" id="bulk-progress-banner">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">🚀 Creating Salesforce Bulk API 2.0 Query Job...</div>
-      <div style="font-size:11px;color:var(--text2);" id="bulk-status-text">Submitting job for: <code>${esc(query.slice(0, 60))}...</code></div>
-    </div>
-  `;
-
-  try {
-    const r = await fetch(`${SERVER}/bulk-query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, sessionId: session.sessionId, instanceUrl: session.instanceUrl })
-    });
-    const data = await r.json();
-    if (data.error) { throw new Error(data.error); }
-
-    const jobId = data.jobId;
-    let attempts = 0;
-
-    const pollInterval = setInterval(async () => {
-      attempts++;
-      try {
-        const sr = await fetch(`${SERVER}/bulk-query/${jobId}?sessionId=${encodeURIComponent(session.sessionId)}&instanceUrl=${encodeURIComponent(session.instanceUrl)}`);
-        const status = await sr.json();
-
-        const processed = (status.numberRecordsProcessed || 0).toLocaleString();
-        const state = status.state || 'Processing';
-        const txtEl = document.getElementById('bulk-status-text');
-        if (txtEl) {
-          txtEl.innerHTML = `Job ID: <code>${jobId}</code> | State: <b>${state}</b> | Records Processed: <b>${processed}</b>`;
-        }
-
-        if (state === 'JobComplete') {
-          clearInterval(pollInterval);
-          const dlUrl = `${SERVER}/bulk-query/${jobId}/download?sessionId=${encodeURIComponent(session.sessionId)}&instanceUrl=${encodeURIComponent(session.instanceUrl)}`;
-          body.innerHTML = `
-            <div class="banner b-ok" style="padding:16px;">
-              <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--green);">✅ Bulk API 2.0 Export Finished Successfully!</div>
-              <div style="font-size:12px;margin-bottom:12px;">Processed <b>${processed}</b> total records in parallel on Salesforce.</div>
-              <a href="${dlUrl}" class="btn btn-exec" download style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-weight:600;">
-                ⬇️ Download Complete CSV File (${processed} records)
-              </a>
-            </div>
-          `;
-        } else if (state === 'Failed' || state === 'Aborted') {
-          clearInterval(pollInterval);
-          body.innerHTML = `<div class="banner b-err">❌ Bulk API Job ${state}: ${esc(status.errorMessage || 'Unknown error')}</div>`;
-        }
-      } catch (err) {
-        if (attempts > 100) clearInterval(pollInterval);
-      }
-    }, 2500);
-  } catch (err) {
-    body.innerHTML = `<div class="banner b-err">❌ Failed to start Bulk Export: ${esc(err.message)}</div>`;
-  }
-}
-
-/* ── Strategy 2: Parallel Worker Chunking Export ── */
-async function runParallelExport() {
-  const query = ta().value.trim();
-  if (!query) { alert('Please enter a SOQL query first'); return; }
-  if (!session.sessionId) { alert('Not connected to Salesforce'); return; }
-
-  const startDate = prompt('Enter Start Date (YYYY-MM-DD):', '2023-01-01');
-  if (!startDate) return;
-  const endDate = prompt('Enter End Date (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
-  if (!endDate) return;
-  const threads = prompt('Enter number of parallel worker threads (1-20):', '8');
-  if (!threads) return;
-
-  const body = document.getElementById('out-body');
-  body.innerHTML = `
-    <div class="banner b-info">
-      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">⚡ Running ${threads} Parallel Worker Threads...</div>
-      <div style="font-size:11px;color:var(--text2);">Splitting query by CreatedDate from ${startDate} to ${endDate} across ${threads} workers</div>
-    </div>
-  `;
-
-  try {
-    const r = await fetch(`${SERVER}/parallel-query`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        baseQuery: query,
-        dateField: 'CreatedDate',
-        startDate: `${startDate}T00:00:00Z`,
-        endDate: `${endDate}T23:59:59Z`,
-        threads: parseInt(threads),
-        sessionId: session.sessionId,
-        instanceUrl: session.instanceUrl
-      })
-    });
-    const data = await r.json();
-    if (data.error || !data.success) {
-      throw new Error(data.error || (data.errors ? data.errors.join('; ') : 'Parallel query failed'));
-    }
-
-    const output = {
-      raw: { totalSize: data.totalRecords, records: data.records },
-      success: true,
-      label: `✅ Parallel Export (${data.fetchedRecords} records)`,
-      meta: `⚡ ${data.threads} threads`,
-      query,
-      timestamp: new Date().toISOString()
-    };
-
-    renderResultsTable(output.raw);
-  } catch (err) {
-    body.innerHTML = `<div class="banner b-err">❌ Parallel Export Error: ${esc(err.message)}</div>`;
-  }
 }
 
 function renderLog(data) {
@@ -1527,7 +1137,6 @@ function renderLog(data) {
 
 function renderJSON(data) { document.getElementById('out-body').innerHTML = `<pre class="raw-pre">${esc(JSON.stringify(data, null, 2))}</pre>`; }
 
-/* ── History Panel ── */
 function renderSidebarHistory() {
   const listEl = document.getElementById('sidebar-list'); listEl.innerHTML = '';
   const query = (document.getElementById('history-search').value || '').toLowerCase();
@@ -1548,10 +1157,7 @@ function renderSidebarHistory() {
     el.innerHTML = `
       <div class="si-top">
         <span class="si-tag ${tagCls}">${item.mode}</span>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span class="si-ts">${ts}</span>
-          <button class="btn-del-item" title="Delete from history" onclick="deleteHistoryItem(${item.id}, event)">🗑️</button>
-        </div>
+        <span class="si-ts">${ts}</span>
       </div>
       <div class="si-code" title="${esc(item.code)}">${esc(item.code)}</div>
     `;
@@ -1584,7 +1190,6 @@ function formatChipText(query) {
 function renderRecentChips() {
   const chipsList = document.getElementById('chips-list'); chipsList.innerHTML = '';
   
-  // Deduplicate recent queries by code
   const soqlItems = [];
   const seen = new Set();
   for (const h of historyList) {
@@ -1621,7 +1226,6 @@ function toggleSidebar() {
   sb.style.display = sb.style.display === 'none' ? 'flex' : 'none';
 }
 
-/* ── History Modal ── */
 function openHistoryModal() {
   document.getElementById('history-modal').classList.add('show');
   renderModalHistory();
@@ -1639,10 +1243,7 @@ function renderModalHistory() {
     el.innerHTML = `
       <div class="si-top">
         <span class="si-tag ${item.mode==='soql'?'tag-soql':'tag-apex'}">${item.mode}</span>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <span class="si-ts">${item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}</span>
-          <button class="btn-del-item" title="Delete from history" onclick="deleteHistoryItem(${item.id}, event)">🗑️</button>
-        </div>
+        <span class="si-ts">${item.timestamp}</span>
       </div>
       <pre style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);white-space:pre-wrap;">${esc(item.code)}</pre>
     `;
@@ -1660,20 +1261,12 @@ function exportHistoryJson() {
   triggerDownload(JSON.stringify(historyList, null, 2), `history_export_${Date.now()}.json`);
 }
 
-function deleteHistoryItem(id, e) {
-  if (e) e.stopPropagation();
-  historyList = historyList.filter(h => h.id !== id);
-  saveHistory();
-  renderModalHistory();
-}
-
 function clearAllHistory() {
   if (confirm('Clear all execution and query history?')) {
     historyList = []; saveHistory(); closeHistoryModal();
   }
 }
 
-/* ── Downloads & Copy ── */
 function buildLogTxt(output) {
   const sep = '═'.repeat(68); const data = output.raw || {};
   let txt = `${sep}\nLAPEX FLASH LOG\n${sep}\nTimestamp    : ${output.timestamp}\nElapsed      : ${output.elapsed}\nStatus       : ${output.success?'SUCCESS':'FAILED'}\n${sep}\n\n── APEX CODE ──────────────────────────────────────────────\n${output.code}\n\n${sep}\n── RESULT ────────────────────────────────────────\n`;
@@ -1702,16 +1295,6 @@ function clearOutput() {
   const tab = getActiveTab(); if (tab) tab.output = null;
 }
 
-function toggleMenu() { document.getElementById('quick-menu').classList.toggle('show'); }
-window.onclick = function(e) { if (!e.target.matches('.btn-ghost')) { const d = document.getElementById('quick-menu'); if (d?.classList.contains('show')) d.classList.remove('show'); } };
-
-function setStatus(cls, msg, showSpin = false) {
-  const b = document.getElementById('status-badge'); b.className = 'status-badge show ' + cls;
-  document.getElementById('spin').style.display = showSpin ? 'block' : 'none';
-  document.getElementById('status-text').textContent = msg;
-}
-function clearStatus() { document.getElementById('status-badge').className = 'status-badge'; }
-
 function lc(s) {
   if (/USER_DEBUG/i.test(s)) return 'c-user-debug';
   if (/EXECUTION_STARTED|EXECUTION_FINISHED/i.test(s)) return 'c-exec';
@@ -1724,7 +1307,6 @@ function lc(s) {
   return 'c-def';
 }
 
-/* ── Saved Logs Modal ── */
 async function openSavedLogsModal() {
   document.getElementById('saved-logs-modal').classList.add('show');
   await fetchSavedLogs();
@@ -1754,10 +1336,7 @@ async function fetchSavedLogs() {
       el.innerHTML = `
         <div class="si-top">
           <span class="si-tag ${isOk ? 'tag-apex' : 'tag-soql'}" style="${isOk ? '' : 'background:var(--red-dim);color:var(--red);'}">${isOk ? 'SUCCESS' : 'FAILED'}</span>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <span class="si-ts">${timeStr} · ${kb}</span>
-            <button class="btn-del-item" title="Delete Saved Log" onclick="deleteSavedLog('${esc(file.filename)}', event)">🗑️</button>
-          </div>
+          <span class="si-ts">${timeStr} · ${kb}</span>
         </div>
         <div class="si-code" style="color:var(--text);font-weight:600;">📁 ${esc(file.filename)}</div>
       `;
@@ -1766,37 +1345,6 @@ async function fetchSavedLogs() {
     });
   } catch (err) {
     listEl.innerHTML = `<div style="font-size:11.5px;color:var(--red);padding:12px">Error loading logs: ${esc(err.message)}</div>`;
-  }
-}
-
-async function deleteSavedLog(filename, e) {
-  if (e) e.stopPropagation();
-  if (!confirm(`Delete log file "${filename}"?`)) return;
-  try {
-    const r = await fetch(`${SERVER}/saved-logs/${encodeURIComponent(filename)}`, { method: 'DELETE' });
-    const data = await r.json();
-    if (data.success) {
-      await fetchSavedLogs();
-    } else {
-      alert(data.error || 'Failed to delete log file.');
-    }
-  } catch (err) {
-    alert('Error deleting log file: ' + err.message);
-  }
-}
-
-async function deleteAllSavedLogs() {
-  if (!confirm('Are you sure you want to delete ALL saved server logs? This cannot be undone.')) return;
-  try {
-    const r = await fetch(`${SERVER}/saved-logs`, { method: 'DELETE' });
-    const data = await r.json();
-    if (data.success) {
-      await fetchSavedLogs();
-    } else {
-      alert(data.error || 'Failed to delete log files.');
-    }
-  } catch (err) {
-    alert('Error deleting log files: ' + err.message);
   }
 }
 
@@ -1828,7 +1376,6 @@ async function viewSavedLog(filename) {
 
 function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-/* ── Salesforce Field & sObject Autocomplete Engine ── */
 let sfObjectList = null;
 const sfFieldMap = {};
 
@@ -1874,12 +1421,6 @@ async function getSfFields(sobject) {
   return [];
 }
 
-function isInsideSoqlBracket(docUpToCursor) {
-  const lastOpen = docUpToCursor.lastIndexOf('[');
-  const lastClose = docUpToCursor.lastIndexOf(']');
-  return lastOpen > lastClose && /\bSELECT\b/i.test(docUpToCursor.slice(lastOpen));
-}
-
 function sfAutocompleteHint(cm) {
   return new Promise(async (resolve) => {
     const cur = cm.getCursor();
@@ -1889,7 +1430,6 @@ function sfAutocompleteHint(cm) {
 
     // Text up to current cursor (multiline safe)
     const docUpToCursor = cm.getRange(CodeMirror.Pos(0, 0), cur);
-    const insideSoql = isInsideSoqlBracket(docUpToCursor);
 
     let word = token.string;
     let start = token.start;
@@ -1906,113 +1446,90 @@ function sfAutocompleteHint(cm) {
     const list = [];
     const addedSet = new Set();
 
-    function addSuggestion(text, typeLabel, label, priority = 0) {
+    function addSuggestion(text, typeLabel, label, customRender) {
       const k = text.toLowerCase();
       if (addedSet.has(k)) return;
       addedSet.add(k);
       list.push({
         text: text,
         displayText: label ? `${text} — ${label}` : text,
-        priority: priority,
-        render: (el, _self, data) => {
-          el.innerHTML = `<span style="font-weight:600;">${esc(data.text)}</span>${typeLabel ? `<span class="cm-hint-type">${esc(typeLabel)}</span>` : ''}`;
-        }
+        render: customRender || ((el, _self, data) => {
+          el.innerHTML = `<span>${esc(data.text)}</span>${typeLabel ? `<span class="cm-hint-type">${esc(typeLabel)}</span>` : ''}`;
+        })
       });
     }
 
     // 1. Check dot notation: e.g. "Account." or "acc."
-    let isDotNotation = false;
-    let dotParent = '';
+    let isFieldSearch = false;
+    let targetSObject = '';
 
     const charBefore = line.charAt(start - 1);
     if (charBefore === '.') {
-      isDotNotation = true;
+      isFieldSearch = true;
       const prevToken = cm.getTokenAt(CodeMirror.Pos(cur.line, start - 1));
       if (prevToken && prevToken.string && /^[a-zA-Z0-9_]+$/.test(prevToken.string)) {
-        dotParent = prevToken.string;
+        targetSObject = prevToken.string;
       }
     }
 
-    // 2. Check if typing immediately after FROM / INTO (multiline aware)
+    // 2. Check if cursor is directly after FROM / INTO (multiline aware)
     const isAfterFrom = /\b(FROM|INTO)\s+([a-zA-Z0-9_]*)$/i.test(docUpToCursor);
 
-    // 3. Find any FROM <SObject> clause in full text or current query
+    // 3. Find any FROM <SObject> clause in full text
     let soqlSObject = '';
     const fromMatches = Array.from(fullText.matchAll(/\bFROM\s+([a-zA-Z0-9_]+)/gi));
     if (fromMatches.length > 0) {
       soqlSObject = fromMatches[fromMatches.length - 1][1];
-      getSfFields(soqlSObject); // pre-fetch fields in background
+      getSfFields(soqlSObject); // pre-fetch in background
     }
 
-    // --- CASE 1: Typing after FROM / INTO -> Suggest sObjects ONLY (Salesforce Inspector style) ---
-    if (isAfterFrom) {
-      const sobjects = await getSfObjects();
-      sobjects.forEach(obj => {
-        const nameL = obj.name.toLowerCase();
-        const labelL = (obj.label || '').toLowerCase();
-        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
-          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
-          addSuggestion(obj.name, obj.label || 'sObject', obj.label, starts ? 2 : 1);
+    // Branch logic based on context
+    if (isFieldSearch && targetSObject) {
+      const fields = await getSfFields(targetSObject);
+      fields.forEach(f => {
+        if (!wordLower || f.name.toLowerCase().includes(wordLower) || (f.label && f.label.toLowerCase().includes(wordLower))) {
+          addSuggestion(f.name, `${f.label} · ${f.type}`, f.label);
         }
       });
-    }
-    // --- CASE 2: Dot notation -> Suggest Parent Object Fields (e.g. Account.Name, Owner.Email) ---
-    else if (isDotNotation && dotParent) {
-      let targetObj = dotParent;
-      const parentLower = dotParent.toLowerCase();
-      if (['owner', 'createdby', 'lastmodifiedby'].includes(parentLower)) {
-        targetObj = 'User';
+    } else if (isAfterFrom) {
+      const sobjects = await getSfObjects();
+      sobjects.forEach(obj => {
+        if (!wordLower || obj.name.toLowerCase().includes(wordLower) || (obj.label && obj.label.toLowerCase().includes(wordLower))) {
+          addSuggestion(obj.name, obj.label, obj.label);
+        }
+      });
+    } else if (currentMode === 'soql') {
+      if (soqlSObject) {
+        const fields = await getSfFields(soqlSObject);
+        fields.forEach(f => {
+          if (!wordLower || f.name.toLowerCase().includes(wordLower) || (f.label && f.label.toLowerCase().includes(wordLower))) {
+            addSuggestion(f.name, `${f.label} · ${f.type}`, f.label);
+          }
+        });
       }
-      const fields = await getSfFields(targetObj);
-      fields.forEach(f => {
-        const nameL = f.name.toLowerCase();
-        const labelL = (f.label || '').toLowerCase();
-        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
-          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
-          addSuggestion(f.name, `${f.label} · ${f.type}`, f.label, starts ? 2 : 1);
-        }
-      });
-    }
-    // --- CASE 3: In SOQL Query or inside [...] with a FROM <SObject> clause -> Suggest Fields of <SObject> ---
-    else if (soqlSObject && (currentMode === 'soql' || insideSoql)) {
-      const fields = await getSfFields(soqlSObject);
-      fields.forEach(f => {
-        const nameL = f.name.toLowerCase();
-        const labelL = (f.label || '').toLowerCase();
-        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
-          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
-          addSuggestion(f.name, `${f.label} · ${f.type}`, f.label, starts ? 3 : 2);
+
+      const sobjects = await getSfObjects();
+      sobjects.forEach(obj => {
+        if (wordLower && (obj.name.toLowerCase().startsWith(wordLower) || (obj.label && obj.label.toLowerCase().startsWith(wordLower)))) {
+          addSuggestion(obj.name, `Object: ${obj.label}`, obj.label);
         }
       });
 
       SOQL_KEYWORDS.forEach(kw => {
         if (!wordLower || kw.toLowerCase().startsWith(wordLower)) {
-          addSuggestion(kw, 'Keyword', null, 1);
+          addSuggestion(kw, 'Keyword', null);
         }
       });
-    }
-    // --- CASE 4: Explicit Ctrl-Space in Apex mode outside SOQL ---
-    else if (currentMode === 'soql' || insideSoql || isDotNotation) {
+    } else {
       const sobjects = await getSfObjects();
       sobjects.forEach(obj => {
-        const nameL = obj.name.toLowerCase();
-        const labelL = (obj.label || '').toLowerCase();
-        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
-          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
-          addSuggestion(obj.name, obj.label || 'sObject', obj.label, starts ? 2 : 1);
-        }
-      });
-      SOQL_KEYWORDS.forEach(kw => {
-        if (!wordLower || kw.toLowerCase().startsWith(wordLower)) {
-          addSuggestion(kw, 'Keyword', null, 1);
+        if (!wordLower || obj.name.toLowerCase().includes(wordLower) || (obj.label && obj.label.toLowerCase().includes(wordLower))) {
+          addSuggestion(obj.name, obj.label, obj.label);
         }
       });
     }
 
     if (list.length === 0) return resolve(null);
-
-    // Sort by priority (higher priority first), then alphabetically
-    list.sort((a, b) => b.priority - a.priority || a.text.localeCompare(b.text));
 
     resolve({
       list: list.slice(0, 150),
@@ -2041,29 +1558,9 @@ function initCodeEditor() {
       }
     });
     cmEditor.on('keyup', (cm, e) => {
-      if (e.key === 'Control' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Enter' || e.key === 'Escape' || e.key === 'Tab' || e.key === 'Backspace') return;
-      
-      const cur = cm.getCursor();
-      const docUpToCursor = cm.getRange(CodeMirror.Pos(0, 0), cur);
-      const line = cm.getLine(cur.line);
-      const token = cm.getTokenAt(cur);
-      const charBefore = line.charAt(token.start - 1);
-
-      // In SOQL Mode: auto-trigger hint on alphanumeric or dot
-      if (currentMode === 'soql') {
-        if (!cm.state.completionActive && e.key.length === 1 && /[a-zA-Z0-9_\.]/.test(e.key)) {
-          CodeMirror.showHint(cm, sfAutocompleteHint, { completeSingle: false });
-        }
-        return;
-      }
-
-      // In Apex Mode: ONLY auto-trigger inside [...] SOQL brackets or after a dot '.'
-      const insideSoql = isInsideSoqlBracket(docUpToCursor);
-      const isDot = charBefore === '.' || e.key === '.';
-      if (insideSoql || isDot) {
-        if (!cm.state.completionActive && e.key.length === 1 && /[a-zA-Z0-9_\.]/.test(e.key)) {
-          CodeMirror.showHint(cm, sfAutocompleteHint, { completeSingle: false });
-        }
+      if (e.key === 'Control' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Enter' || e.key === 'Escape') return;
+      if (!cm.state.completionActive && e.key.length === 1 && /[a-zA-Z0-9_\.]/.test(e.key)) {
+        CodeMirror.showHint(cm, sfAutocompleteHint, { completeSingle: false });
       }
     });
     cmEditor.on('change', () => {
@@ -2076,7 +1573,6 @@ function initCodeEditor() {
   }
 }
 
-/* ── Theme Switcher ── */
 function toggleTheme() {
   const isLight = document.body.classList.toggle('theme-light');
   localStorage.setItem('theme_mode', isLight ? 'light' : 'dark');
@@ -2094,7 +1590,6 @@ function applySavedTheme() {
   }
 }
 
-/* ── Field Permissions Logic ── */
 async function checkFieldPerms() {
   const sobject = document.getElementById('fp-sobject').value.trim();
   const field   = document.getElementById('fp-field').value.trim();
@@ -2129,7 +1624,6 @@ async function checkFieldPerms() {
   }
 }
 
-/* ── Local Metadata Sync & Global Search ── */
 async function syncMetadata() {
   if (!session.sessionId) return alert('Not logged in!');
   const btn = document.getElementById('btn-sync-metadata');
@@ -2193,41 +1687,14 @@ async function doGlobalSearch() {
   }
 }
 
-/* ── Extension Message Bridge ── */
-window.addEventListener('message', (e) => {
-  if (e.data && e.data.type === 'LAPEX_SESSION_RESPONSE') {
-    const resp = e.data;
-    if (resp && resp.found && resp.sessionId && resp.instanceUrl) {
-      const instInput = document.getElementById('sid-inst');
-      const valInput  = document.getElementById('sid-val');
-      if (instInput && valInput && (!session || !session.sessionId)) {
-        instInput.value = resp.instanceUrl;
-        valInput.value  = resp.sessionId;
-        switchLoginTab('sid');
-        doSidLogin();
-      }
-    }
-  }
-});
-
-function requestExtensionSession() {
-  window.postMessage({ type: 'LAPEX_GET_SESSION' }, '*');
-}
-
-/* ── Init ── */
 (function() {
   createTab('apex', 'Script 1');
   createTab('soql', 'Query 1');
   switchMode('apex');
   initCodeEditor();
   applySavedTheme();
-  renderRecentSessions();
   if (loadSession()) { showExecScreen(); }
-  else {
-    showLoginScreen();
-    requestExtensionSession();
-    setTimeout(() => { autoDetectSessionFromTab(); }, 500);
-  }
+  else { showLoginScreen(); }
 })();
 </script>
 </body>

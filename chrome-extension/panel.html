@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Apex Executor</title>
+  <title>Lapex Flash</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -154,7 +154,7 @@
 <div class="topbar">
   <div class="brand">
     <div class="brand-ico">⚡</div>
-    Apex Executor
+    Lapex Flash
   </div>
   <div class="sep"></div>
   <div class="user-chip" id="user-chip" style="display:none">
@@ -404,7 +404,7 @@ function renderJSON(data){document.getElementById('out-body').innerHTML=`<pre cl
 /* ── Download ── */
 function buildTxt(output){
   const sep='═'.repeat(60);const d=output.raw||{};
-  let txt=`${sep}\nAPEX EXECUTOR — LOG\n${sep}\nTimestamp : ${output.timestamp}\nUser      : ${SF.name||''}\nInstance  : ${SF.instanceUrl||''}\nStatus    : ${output.success?'SUCCESS':'FAILED'}\nElapsed   : ${output.elapsed}\n${sep}\n\n── APEX CODE ──\n${output.code}\n\n── RESULT ──\n`;
+  let txt=`${sep}\nLAPEX FLASH — LOG\n${sep}\nTimestamp : ${output.timestamp}\nUser      : ${SF.name||''}\nInstance  : ${SF.instanceUrl||''}\nStatus    : ${output.success?'SUCCESS':'FAILED'}\nElapsed   : ${output.elapsed}\n${sep}\n\n── APEX CODE ──\n${output.code}\n\n── RESULT ──\n`;
   if(d.compiled===false){const ln=d.line>0?d.line:'?';txt+=`COMPILE ERROR at Line ${ln}\n${d.compileProblem||''}\n`;}
   else if(!d.success){txt+=`EXCEPTION: ${d.exceptionMessage||''}\n${d.exceptionStackTrace||''}\n`;}
   else txt+=`SUCCESS\n`;

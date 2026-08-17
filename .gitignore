@@ -2,3 +2,5 @@ node_modules/
 logs/*.txt
 .DS_Store
 *.log
+workspace/
+

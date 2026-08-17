@@ -1,11 +1,10 @@
 {
-  "name": "lapex-flash",
+  "name": "lapex-flash-remote",
   "version": "1.0.0",
-  "description": "Lapex Flash — Salesforce Developer Studio for Anonymous Apex & SOQL",
+  "description": "Lapex Flash — Remote Server Deployment",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

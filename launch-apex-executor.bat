@@ -1,9 +1,9 @@
 @echo off
-title Apex Executor — CORS-bypass launcher
-color 0A
+title Lapex Flash — CORS-bypass launcher
+color 0B
 echo.
 echo  ╔══════════════════════════════════════════════════════╗
-echo  ║         APEX EXECUTOR — Dev Browser Launcher         ║
+echo  ║         LAPEX FLASH — Dev Browser Launcher           ║
 echo  ║     (CORS disabled for local Workbench access)       ║
 echo  ╚══════════════════════════════════════════════════════╝
 echo.

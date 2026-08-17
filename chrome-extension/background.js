@@ -1,5 +1,5 @@
 /**
- * Apex Executor — Chrome Extension Background Service Worker
+ * Lapex Flash — Chrome Extension Background Service Worker
  * ──────────────────────────────────────────────────────────
  * THE MAGIC: Chrome extensions can read browser cookies directly.
  * We read the Salesforce 'sid' cookie → instant session, zero login.
@@ -27,6 +27,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     .catch(err => sendResponse({ error: err.message }));
   return true; // keep channel open for async
 });
+
+if (chrome.runtime.onMessageExternal) {
+  chrome.runtime.onMessageExternal.addListener((msg, _sender, sendResponse) => {
+    handleMessage(msg)
+      .then(sendResponse)
+      .catch(err => sendResponse({ error: err.message }));
+    return true;
+  });
+}
 
 async function handleMessage(msg) {
   switch (msg.type) {
@@ -195,7 +204,7 @@ async function ensureTraceFlag(API, headers, userId, level) {
 
   const dl = await fetch(`${API}/tooling/sobjects/DebugLevel/`, {
     method: 'POST', headers,
-    body: JSON.stringify({ DeveloperName: 'ApexExt_' + Date.now(), MasterLabel: 'Apex Executor Ext', ApexCode: sfLevel, System: sfLevel, Callout: 'INFO', Database: 'INFO', Validation: 'INFO', Visualforce: 'INFO', Workflow: 'INFO', ApexProfiling: 'NONE' }),
+    body: JSON.stringify({ DeveloperName: 'LapexFlash_' + Date.now(), MasterLabel: 'Lapex Flash Ext', ApexCode: sfLevel, System: sfLevel, Callout: 'INFO', Database: 'INFO', Validation: 'INFO', Visualforce: 'INFO', Workflow: 'INFO', ApexProfiling: 'NONE' }),
   }).then(r => r.json());
 
   await fetch(`${API}/tooling/sobjects/TraceFlag/`, {
