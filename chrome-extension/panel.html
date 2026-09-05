@@ -159,7 +159,8 @@
   <div class="sep"></div>
   <div class="user-chip" id="user-chip" style="display:none">
     <div class="dot"></div>
-    <span id="user-name">Connected</span>
+    <span id="user-name"></span>
+    <select id="panel-org-select" style="display:none;background:transparent;border:none;color:var(--text);font-size:11px;font-family:inherit;outline:none;cursor:pointer;max-width:120px;" onchange="switchPanelOrg(this.value)"></select>
   </div>
   <button class="btn-refresh" onclick="refreshSession()" title="Re-detect Salesforce session">↺</button>
 </div>
@@ -258,6 +259,7 @@
 <script>
 /* ── Session ── */
 let SF = { sessionId: null, instanceUrl: null, name: null };
+let panelDetectedOrgs = [];
 
 async function refreshSession() {
   document.getElementById('nc-err').style.display = 'none';
@@ -272,10 +274,38 @@ async function refreshSession() {
     return;
   }
 
-  SF = { sessionId: result.sessionId, instanceUrl: result.instanceUrl, name: result.name || result.email };
-  document.getElementById('user-name').textContent = SF.name || SF.instanceUrl;
-  document.getElementById('user-chip').style.display = 'flex';
+  panelDetectedOrgs = result.orgs && result.orgs.length > 0 ? result.orgs : [result];
+  applyPanelOrg(panelDetectedOrgs[0]);
+  renderPanelOrgSwitcher(panelDetectedOrgs);
   showMain();
+}
+
+function applyPanelOrg(org) {
+  SF = { sessionId: org.sessionId, instanceUrl: org.instanceUrl, name: org.name || org.email };
+  const nameEl = document.getElementById('user-name');
+  if (nameEl) nameEl.textContent = org.orgName ? `${org.orgName} (${org.name || 'User'})` : (org.name || org.instanceUrl);
+  document.getElementById('user-chip').style.display = 'flex';
+}
+
+function renderPanelOrgSwitcher(orgs) {
+  const sel = document.getElementById('panel-org-select');
+  const nameEl = document.getElementById('user-name');
+  if (!sel) return;
+  if (orgs.length > 1) {
+    sel.innerHTML = orgs.map((o, idx) => `<option value="${idx}">${o.isActive ? '🟢 ' : ''}${o.orgName} (${o.name || 'User'})</option>`).join('');
+    sel.style.display = 'inline-block';
+    if (nameEl) nameEl.style.display = 'none';
+  } else {
+    sel.style.display = 'none';
+    if (nameEl) nameEl.style.display = 'inline';
+  }
+}
+
+function switchPanelOrg(idx) {
+  const org = panelDetectedOrgs[parseInt(idx, 10)];
+  if (!org) return;
+  applyPanelOrg(org);
+  setStatus('sb-ok', 'Switched to ' + org.orgName);
 }
 
 function showNC(err) {

@@ -47,70 +47,155 @@ async function handleMessage(msg) {
 }
 
 /* ════════════════════════════════════════════════════════════
-   GET SESSION — reads the 'sid' cookie from Salesforce tabs
-   This is how Lightning Studio and other SF extensions do it!
+   GET SESSION — reads the CORE 'sid' cookie from Salesforce tabs
+   - Prioritizes active/focused tab
+   - Handles MULTIPLE open orgs without cookie/url mixup
+   - Converts lightning.force.com to my.salesforce.com to get
+     the UNRESTRICTED core API session ID (bypasses "Illegal Session")
 ════════════════════════════════════════════════════════════ */
+function toCoreSalesforceInfo(rawUrl) {
+  try {
+    const u = new URL(rawUrl);
+    let host = u.hostname.toLowerCase();
+    if (host.endsWith('.lightning.force.com')) {
+      host = host.replace('.lightning.force.com', '.my.salesforce.com');
+    } else if (host.endsWith('.vf.force.com')) {
+      host = host.replace('.vf.force.com', '.my.salesforce.com');
+    }
+    return {
+      instUrl: `https://${host}`,
+      host,
+      subdomain: host.split('.')[0] // e.g. "nbx--preprod"
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 async function getSession() {
-  // Step 1: Find an open Salesforce tab to know the instance URL
   const allTabs = await chrome.tabs.query({});
-  const sfTab = allTabs.find(t =>
+  const sfTabs = allTabs.filter(t =>
     t.url && /https?:\/\/[^/]+\.(salesforce|force)\.com/.test(t.url)
   );
 
-  if (sfTab) {
-    try {
-      const url      = new URL(sfTab.url);
-      const instUrl  = `${url.protocol}//${url.hostname}`;
-      const cookie   = await chrome.cookies.get({ url: instUrl, name: 'sid' });
+  if (sfTabs.length === 0) {
+    return { found: false, error: 'No open Salesforce tabs found.\nPlease open your Salesforce org in a browser tab first.' };
+  }
 
-      if (cookie?.value) {
-        // Verify it's still valid
-        const info = await getUserInfo(instUrl, cookie.value);
-        if (!info.error) {
-          return {
-            found:       true,
-            sessionId:   cookie.value,
-            instanceUrl: instUrl,
-            name:        info.name,
-            email:       info.email,
-            orgId:       info.organization_id,
-            autoDetected: true,
-            sfTabTitle:  sfTab.title,
-          };
+  // Check currently active tab to prioritize user's active org
+  let activeTab = null;
+  try {
+    const [t] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    activeTab = t;
+  } catch (_) {}
+
+  // Order tabs: active tab first, then others
+  const orderedTabs = [];
+  if (activeTab && activeTab.url && /https?:\/\/[^/]+\.(salesforce|force)\.com/.test(activeTab.url)) {
+    orderedTabs.push(activeTab);
+  }
+  for (const t of sfTabs) {
+    if (!orderedTabs.some(ot => ot.id === t.id)) orderedTabs.push(t);
+  }
+
+  const allSfCookies = await chrome.cookies.getAll({ name: 'sid' });
+  const detectedOrgs = [];
+  const seenSubdomains = new Set();
+
+  for (const tab of orderedTabs) {
+    const core = toCoreSalesforceInfo(tab.url);
+    if (!core || seenSubdomains.has(core.subdomain)) continue;
+
+    try {
+      const candidates = [];
+
+      // 1. Direct cookie for core.instUrl (e.g. https://nbx--preprod.sandbox.my.salesforce.com)
+      const directCookie = await chrome.cookies.get({ url: core.instUrl, name: 'sid' });
+      if (directCookie?.value) candidates.push(directCookie);
+
+      // 2. Cookie for tab.url
+      if (tab.url) {
+        const tabCookie = await chrome.cookies.get({ url: tab.url, name: 'sid' });
+        if (tabCookie?.value && !candidates.some(c => c.value === tabCookie.value)) {
+          candidates.push(tabCookie);
         }
+      }
+
+      // 3. Domain cookies from allSfCookies matching subdomain
+      const domainMatches = allSfCookies.filter(c => 
+        c.domain.includes(core.subdomain) || c.domain.endsWith('.salesforce.com')
+      );
+
+      // Sort domain matches: strictly prioritize non-lightning and non-vf cookies!
+      domainMatches.sort((a, b) => {
+        const aBad = a.domain.includes('lightning.force.com') || a.domain.includes('vf.force.com');
+        const bBad = b.domain.includes('lightning.force.com') || b.domain.includes('vf.force.com');
+        if (aBad && !bBad) return 1;
+        if (!aBad && bBad) return -1;
+        const aSub = a.domain.includes(core.subdomain);
+        const bSub = b.domain.includes(core.subdomain);
+        if (aSub && !bSub) return -1;
+        if (!aSub && bSub) return 1;
+        return 0;
+      });
+
+      for (const dm of domainMatches) {
+        if (!candidates.some(c => c.value === dm.value)) {
+          candidates.push(dm);
+        }
+      }
+
+      // Test candidates against getUserInfo on core.instUrl
+      let validCookie = null;
+      let validInfo = null;
+
+      for (const candidate of candidates) {
+        const info = await getUserInfo(core.instUrl, candidate.value);
+        if (!info.error && (info.name || info.email)) {
+          validCookie = candidate;
+          validInfo = info;
+          break; // Found the working session!
+        }
+      }
+
+      if (validCookie && validInfo) {
+        seenSubdomains.add(core.subdomain);
+        detectedOrgs.push({
+          found: true,
+          sessionId: validCookie.value,
+          instanceUrl: core.instUrl,
+          name: validInfo.name || validInfo.email,
+          email: validInfo.email,
+          orgId: validInfo.organization_id || '',
+          orgName: core.subdomain.toUpperCase(),
+          tabTitle: tab.title || core.subdomain,
+          tabId: tab.id,
+          isActive: tab.id === activeTab?.id,
+          autoDetected: true,
+        });
       }
     } catch (_) {}
   }
 
-  // Step 2: Fallback — search ALL cookies for a salesforce.com 'sid'
-  const allSfCookies = await chrome.cookies.getAll({ name: 'sid' });
-  const sfCookie = allSfCookies.find(c =>
-    c.domain.includes('salesforce.com') || c.domain.includes('force.com')
-  );
-
-  if (sfCookie) {
-    const domain  = sfCookie.domain.replace(/^\./, '');
-    const instUrl = `https://${domain}`;
-    const info    = await getUserInfo(instUrl, sfCookie.value);
-    if (!info.error) {
-      return {
-        found:       true,
-        sessionId:   sfCookie.value,
-        instanceUrl: instUrl,
-        name:        info.name,
-        email:       info.email,
-        orgId:       info.organization_id,
-        autoDetected: true,
-      };
-    }
+  if (detectedOrgs.length > 0) {
+    const primary = detectedOrgs[0];
+    return {
+      found: true,
+      ...primary,
+      orgs: detectedOrgs, // list of all open orgs for instant 1-click switching
+    };
   }
 
-  return { found: false, error: 'No active Salesforce session found.\nPlease open Salesforce in a browser tab first.' };
+  return {
+    found: false,
+    error: 'Could not extract a valid session from your open Salesforce tabs.\nMake sure you are logged in to Salesforce and refresh your tab.'
+  };
 }
 
 async function getUserInfo(instanceUrl, sessionId) {
   try {
-    const r = await fetch(`${instanceUrl}/services/oauth2/userinfo`, {
+    const cleanUrl = instanceUrl.replace('.lightning.force.com', '.my.salesforce.com');
+    const r = await fetch(`${cleanUrl}/services/oauth2/userinfo`, {
       headers: { 'Authorization': `Bearer ${sessionId}` },
     });
     return r.json();
@@ -118,7 +203,8 @@ async function getUserInfo(instanceUrl, sessionId) {
 }
 
 async function verifySession(sessionId, instanceUrl) {
-  const info = await getUserInfo(instanceUrl, sessionId);
+  const cleanUrl = instanceUrl.replace('.lightning.force.com', '.my.salesforce.com');
+  const info = await getUserInfo(cleanUrl, sessionId);
   if (info.error) return { ok: false, error: info.error_description || info.error };
   return { ok: true, name: info.name, email: info.email, orgId: info.organization_id };
 }
@@ -128,7 +214,7 @@ async function verifySession(sessionId, instanceUrl) {
    No CORS issue: host_permissions in manifest grants access
 ════════════════════════════════════════════════════════════ */
 async function executeApex({ sessionId, instanceUrl, code, category, level }) {
-  const base    = instanceUrl.replace(/\/$/, '');
+  const base    = instanceUrl.replace(/\/$/, '').replace('.lightning.force.com', '.my.salesforce.com').replace('.vf.force.com', '.my.salesforce.com');
   const headers = { 'Authorization': `Bearer ${sessionId}`, 'Content-Type': 'application/json' };
   const API     = `${base}/services/data/v66.0`;
 
