@@ -53,7 +53,7 @@ app.use(express.static(__dirname));
 function validateInstanceUrl(url) {
   if (!url || typeof url !== 'string') return null;
   try {
-    let clean = url.trim();
+    let clean = url.trim().replace(/\/+$/, '');
     if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
       clean = 'https://' + clean;
     }
@@ -387,6 +387,10 @@ app.post('/verify', async (req, res) => {
     if (!errMsg) {
       const faultMatch = xml.match(/<faultstring>([^<]+)<\/faultstring>/);
       if (faultMatch) errMsg = faultMatch[1];
+    }
+
+    if (errMsg && errMsg.includes('Illegal Session')) {
+      errMsg = 'Invalid session: Illegal Session (Lightning UI cookie cannot access API). Please use the Lapex Auto-Detect feature or copy the "sid" cookie from the *.my.salesforce.com domain (NOT lightning.force.com).';
     }
 
     res.json({ ok: false, error: errMsg || 'Invalid session ID or URL.' });
