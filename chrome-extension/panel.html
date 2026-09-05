@@ -53,7 +53,17 @@
     .btn-retry:hover{background:var(--dark-btn-hover);transform:translateY(-1px);box-shadow:0 4px 16px rgba(15,23,42,.35)}
 
     /* main workspace */
-    #screen-main{flex:1;display:none;flex-direction:column;overflow:hidden}
+    #screen-main{flex:1;display:none;flex-direction:column;overflow:hidden;position:relative}
+    .workspace{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+
+    /* Wide viewport (e.g. popped out to a full tab): History becomes a
+       permanent sidebar instead of a toggled overlay, matching the web app. */
+    @media (min-width:700px){
+      #screen-main{flex-direction:row}
+      #drawer-history{position:static;inset:auto;width:230px;flex-shrink:0;display:flex!important;
+        border-left:1px solid var(--border);height:auto}
+      #btn-history,#btn-history-close{display:none}
+    }
 
     /* tab bar */
     .tab-bar{flex-shrink:0;display:flex;align-items:stretch;gap:3px;padding:6px 8px 0;
@@ -256,6 +266,7 @@ then click Retry below.</div>
 <!-- MAIN screen -->
 <div id="screen-main">
 
+<div class="workspace" id="workspace">
   <!-- Tabs -->
   <div class="tab-bar" id="tab-bar">
     <button class="tab-add" id="tab-add" title="New tab">+</button>
@@ -352,6 +363,7 @@ then click Retry below.</div>
       </div>
     </div>
   </div>
+</div><!-- /workspace -->
 
   <!-- History drawer -->
   <div class="drawer" id="drawer-history">

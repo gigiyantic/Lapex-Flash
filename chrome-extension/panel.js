@@ -297,6 +297,7 @@ document.getElementById('search-input').addEventListener('input', onSearchInput)
   initEditor(document.getElementById('code-ta'));
   const id = createTab('Script 1'); activeTabId = id; renderTabs(); setMode('apex');
   refreshSession();
+  renderHistoryDrawer(); // pre-populate in case History renders as a permanent sidebar (wide viewport)
 
   // chrome.tabs.getCurrent() only resolves to a Tab when this page is
   // running as an actual browser tab (not the side panel) — hide the
