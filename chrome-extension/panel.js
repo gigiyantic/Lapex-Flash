@@ -253,6 +253,9 @@ function downloadLog() {
 async function copyOut() { await navigator.clipboard.writeText(document.getElementById('out-body').innerText); }
 
 /* ── Event bindings (MV3 forbids inline onclick=) ── */
+document.getElementById('btn-popout').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('panel.html') });
+});
 document.getElementById('org-switcher').addEventListener('change', (e) => switchOrg(e.target.value));
 document.getElementById('btn-refresh').addEventListener('click', refreshSession);
 document.getElementById('btn-retry').addEventListener('click', refreshSession);
@@ -293,4 +296,11 @@ document.getElementById('search-input').addEventListener('input', onSearchInput)
   initEditor(document.getElementById('code-ta'));
   const id = createTab('Script 1'); activeTabId = id; renderTabs(); setMode('apex');
   refreshSession();
+
+  // chrome.tabs.getCurrent() only resolves to a Tab when this page is
+  // running as an actual browser tab (not the side panel) — hide the
+  // "pop out" button once we're already in a full tab.
+  chrome.tabs.getCurrent((tab) => {
+    if (tab) document.getElementById('btn-popout').style.display = 'none';
+  });
 })();
