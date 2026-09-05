@@ -285,6 +285,7 @@ document.getElementById('btn-parallel-export').addEventListener('click', runPara
 document.getElementById('btn-history').addEventListener('click', openHistoryDrawer);
 document.getElementById('btn-history-close').addEventListener('click', closeHistoryDrawer);
 document.getElementById('btn-history-clear').addEventListener('click', clearHistory);
+document.getElementById('history-search').addEventListener('input', renderHistoryDrawer);
 
 document.getElementById('btn-search').addEventListener('click', openSearchDrawer);
 document.getElementById('btn-search-close').addEventListener('click', closeSearchDrawer);

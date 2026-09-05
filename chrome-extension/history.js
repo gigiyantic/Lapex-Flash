@@ -44,25 +44,45 @@ function closeHistoryDrawer() {
   document.getElementById('drawer-history').classList.remove('open');
 }
 
+const KIND_TAG = { soql: ['SOQL', 'tag-soql'], fieldperm: ['PERM', 'tag-fieldperm'], apex: ['APEX', 'tag-apex'] };
+
+function historyTimeLabel(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' +
+    d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
 async function renderHistoryDrawer() {
   const body = document.getElementById('history-body');
-  const list = await getHistory();
+  const searchEl = document.getElementById('history-search');
+  const q = (searchEl.value || '').trim().toLowerCase();
+  const fullList = await getHistory();
+  const list = q
+    ? fullList.filter(e => (e.tabName || '').toLowerCase().includes(q) || (e.code || '').toLowerCase().includes(q))
+    : fullList;
 
   if (list.length === 0) {
-    body.innerHTML = '<div class="drawer-empty">No runs yet.</div>';
+    body.innerHTML = `<div class="drawer-empty">${q ? 'No matching runs.' : 'No history yet.'}</div>`;
     return;
   }
 
-  body.innerHTML = list.map(e => `
+  body.innerHTML = list.map(e => {
+    const [label, cls] = KIND_TAG[e.kind] || KIND_TAG.apex;
+    const preview = (e.code || '').split('\n')[0].slice(0, 60);
+    return `
     <div class="drawer-row" data-id="${esc(e.id)}">
       <div class="drawer-row-main">
-        <div class="drawer-row-title">${esc(e.tabName || e.kind)}</div>
-        <div class="drawer-row-sub">${new Date(e.timestamp).toLocaleString()} · ${e.kind === 'soql' ? 'SOQL' : e.kind === 'fieldperm' ? 'Field Perms' : 'Apex'}${e.elapsedMs ? ' · ' + (e.elapsedMs / 1000).toFixed(2) + 's' : ''}</div>
+        <div class="si-top">
+          <span class="si-tag ${cls}">${label}</span>
+          <span class="si-ts">${historyTimeLabel(e.timestamp)}</span>
+        </div>
+        <div class="drawer-row-title">${esc(e.tabName || label)}: ${esc(preview)}</div>
       </div>
       <span class="tag ${e.success ? 'tag-ok' : 'tag-err'}">${e.success ? 'OK' : 'FAIL'}</span>
       <button class="btn btn-danger btn-xs history-delete" data-id="${esc(e.id)}">✕</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
 
   body.querySelectorAll('.drawer-row').forEach(row => {
     row.addEventListener('click', (e) => {
