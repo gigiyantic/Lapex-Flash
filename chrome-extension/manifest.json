@@ -1,0 +1,64 @@
+{
+  "name": "Lapex Flash",
+  "description": "Execute Anonymous Apex & SOQL — reads your Salesforce session automatically, no login needed",
+  "version": "1.0.0",
+  "manifest_version": 3,
+  "author": "Laxman Patel · NBX",
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "action": {
+    "default_title": "Open Lapex Flash",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+
+  "background": {
+    "service_worker": "background.js"
+  },
+
+  "side_panel": {
+    "default_path": "panel.html"
+  },
+
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "http://127.0.0.1:3000/*",
+        "file://*apex-executor.html*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3000/*",
+      "http://127.0.0.1:3000/*"
+    ]
+  },
+
+  "permissions": [
+    "cookies",
+    "tabs",
+    "storage",
+    "sidePanel",
+    "downloads"
+  ],
+
+  "host_permissions": [
+    "https://*.salesforce.com/*",
+    "https://*.force.com/*",
+    "https://*.my.salesforce.com/*",
+    "https://*.lightning.force.com/*"
+  ]
+}

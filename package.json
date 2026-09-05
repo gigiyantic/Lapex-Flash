@@ -1,0 +1,17 @@
+{
+  "name": "lapex-flash",
+  "version": "1.0.0",
+  "description": "Lapex Flash — Salesforce Developer Studio for Anonymous Apex & SOQL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "fs-extra": "^11.4.0",
+    "glob": "^13.0.6",
+    "node-fetch": "^2.7.0"
+  }
+}

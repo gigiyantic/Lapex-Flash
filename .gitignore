@@ -1,0 +1,13 @@
+node_modules/
+logs/*.txt
+.DS_Store
+*.log
+workspace/
+*.zip
+.sf/
+*.bak
+*.txt
+design-showcase.html
+mining-portal-all-screens-preview.html
+miningProdAssayUpload-preview.html
+

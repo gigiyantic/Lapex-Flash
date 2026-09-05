@@ -1,0 +1,2234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lapex Flash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  
+  <!-- CodeMirror IDE Editor -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/theme/one-dark.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/clike/clike.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/sql/sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/edit/closebrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/selection/active-line.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/show-hint.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/addon/hint/sql-hint.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#f8fafc; --panel:#ffffff; --panel2:#f1f5f9;
+      --border:#e2e8f0; --border2:#cbd5e1;
+      --blue:#0284c7; --blue-dim:rgba(2,132,199,0.1); --purple:#7c3aed;
+      --green:#16a34a; --green-dim:rgba(22,163,74,0.1);
+      --yellow:#d97706; --red:#dc2626; --red-dim:rgba(220,38,38,0.1);
+      --text:#0f172a; --text2:#334155; --text3:#64748b;
+      --r:8px; --r-lg:14px;
+    }
+    html,body { min-height:100%; font-family:'Inter',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; overflow-y:auto; }
+    body { display:flex; flex-direction:column; }
+
+    .CodeMirror {
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 13px !important;
+      line-height: 1.65 !important;
+      height: 240px !important;
+      background: #ffffff !important;
+      color: #0f172a !important;
+      border: none !important;
+      flex: 1 !important;
+      width: 100% !important;
+    }
+    .CodeMirror-gutters {
+      background: #f1f5f9 !important;
+      border-right: 1px solid var(--border) !important;
+    }
+    .CodeMirror-linenumber {
+      color: var(--text3) !important;
+      padding: 0 8px 0 6px !important;
+    }
+    .CodeMirror-activeline-background {
+      background: rgba(2, 132, 199, 0.05) !important;
+    }
+    .CodeMirror-cursor {
+      border-left: 2px solid var(--blue) !important;
+    }
+    .CodeMirror-selected {
+      background: rgba(2, 132, 199, 0.18) !important;
+    }
+    .cm-keyword { color: #8957e5 !important; font-weight: 600; }
+    .cm-def { color: #0284c7 !important; }
+    .cm-variable { color: #2563eb !important; }
+    .cm-string { color: #16a34a !important; }
+    .cm-number { color: #d97706 !important; }
+    .cm-comment { color: #64748b !important; font-style: italic; }
+
+    /* CodeMirror Autocomplete Hint Popup */
+    .CodeMirror-hints {
+      background: #ffffff !important;
+      border: 1px solid var(--border2) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.14) !important;
+      font-family: 'JetBrains Mono', monospace !important;
+      font-size: 12px !important;
+      padding: 4px 0 !important;
+      max-height: 220px !important;
+      z-index: 9999 !important;
+    }
+    .CodeMirror-hint {
+      padding: 4px 12px !important;
+      color: #0f172a !important;
+      border-radius: 4px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+    }
+    li.CodeMirror-hint-active {
+      background: var(--blue-dim) !important;
+      color: var(--blue) !important;
+      font-weight: 600 !important;
+    }
+    .cm-hint-type {
+      font-size: 10px;
+      color: #64748b;
+      margin-left: 14px;
+      font-weight: 400;
+    }
+
+    .orbs { display:none; }
+
+    /* ── Topbar ── */
+    .topbar { position:relative; z-index:100; flex-shrink:0; height:52px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; background:rgba(255,255,255,0.96); backdrop-filter:blur(24px); border-bottom:1px solid var(--border2); box-shadow:0 2px 10px rgba(0,0,0,0.03); }
+    .brand { display:flex; align-items:center; gap:9px; font-weight:700; font-size:14px; color:var(--text); }
+    .brand-logo { width:28px; height:28px; border-radius:7px; background:linear-gradient(135deg,var(--blue),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:900; color:#fff; box-shadow:0 0 12px rgba(2,132,199,0.3); }
+    .brand-sub { color:var(--text3); font-weight:400; font-size:12px; }
+    .topbar-right { display:flex; align-items:center; gap:8px; }
+    .chip { border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600; display:flex; align-items:center; gap:5px; }
+    .chip-b { background:var(--blue-dim); color:var(--blue); border:1px solid rgba(2,132,199,0.2); }
+    .chip-g { background:var(--green-dim); color:var(--green); border:1px solid rgba(22,163,74,0.2); }
+    .chip-p { background:rgba(124,58,237,0.1); color:var(--purple); border:1px solid rgba(124,58,237,0.2); }
+
+    /* dropdown menu */
+    .dropdown { position:relative; }
+    .dropdown-content { display:none; position:absolute; right:0; top:36px; background:#ffffff; border:1px solid var(--border2); border-radius:10px; min-width:210px; box-shadow:0 10px 30px rgba(0,0,0,0.1); z-index:200; overflow:hidden; padding:6px 0; }
+    .dropdown-content.show { display:block; }
+    .dropdown-item { display:flex; align-items:center; gap:8px; padding:8px 14px; color:var(--text); text-decoration:none; font-size:12px; font-weight:500; transition:background .15s; cursor:pointer; }
+    .dropdown-item:hover { background:var(--panel2); color:var(--blue); }
+
+    /* ── Screens ── */
+    .screen { display:none; }
+    .screen.active { display:flex; }
+
+    /* ══════════════════════════════════════════════
+       LOGIN SCREEN
+    ══════════════════════════════════════════════ */
+    #screen-login { flex:1; align-items:center; justify-content:center; position:relative; z-index:1; padding:40px 20px; min-height:calc(100vh - 52px); }
+    .login-card { background:#ffffff; border:1px solid var(--border2); border-radius:20px; padding:36px 40px; width:100%; max-width:440px; box-shadow:0 10px 40px rgba(0,0,0,0.06); }
+    .login-logo { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+    .login-logo-icon { width:42px; height:42px; border-radius:11px; background:linear-gradient(135deg,var(--blue),var(--purple)); display:flex; align-items:center; justify-content:center; font-size:20px; box-shadow:0 4px 16px rgba(2,132,199,0.3); color:#fff; }
+    .login-logo-text h1 { font-size:18px; font-weight:700; color:var(--text); }
+    .login-logo-text p  { font-size:12px; color:var(--text3); margin-top:2px; }
+
+    .form-group { margin-bottom:14px; }
+    .form-group label { display:block; font-size:12px; font-weight:600; color:var(--text2); margin-bottom:6px; }
+    .form-input { width:100%; background:#ffffff; color:var(--text); border:1px solid var(--border2); border-radius:8px; padding:9px 12px; font-family:'Inter',sans-serif; font-size:13px; outline:none; transition:border-color .15s; }
+    .form-input:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(2,132,199,0.15); }
+    .form-input::placeholder { color:var(--text3); }
+    select.form-input { appearance:none; -webkit-appearance:none; cursor:pointer; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2364748b' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:30px; }
+    select.form-input option { background:#ffffff; color:#0f172a; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-hint { font-size:11px; color:var(--text3); margin-top:4px; }
+
+    .btn-login { width:100%; padding:11px; border-radius:8px; border:none; cursor:pointer; background:linear-gradient(135deg,var(--blue),#0369a1); color:#fff; font-family:'Inter',sans-serif; font-size:13.5px; font-weight:700; box-shadow:0 4px 18px rgba(2,132,199,0.3); transition:all .2s; margin-top:6px; display:flex; align-items:center; justify-content:center; gap:8px; }
+    .btn-login:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(2,132,199,0.45); }
+    .login-error { display:none; background:var(--red-dim); border:1px solid rgba(220,38,38,0.2); border-radius:8px; padding:10px 13px; font-size:12.5px; color:var(--red); margin-bottom:14px; line-height:1.5; }
+    .login-error.show { display:block; }
+
+    /* ══════════════════════════════════════════════
+       EXECUTE & QUERY MAIN SCREEN
+    ══════════════════════════════════════════════ */
+    #screen-exec { flex:1; flex-direction:column; min-height:calc(100vh - 52px); }
+
+    .user-bar { flex-shrink:0; display:flex; align-items:center; gap:10px; padding:7px 20px; background:rgba(241,245,249,0.95); border-bottom:1px solid var(--border); backdrop-filter:blur(20px); }
+    .user-bar-info { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); }
+    .user-bar-info strong { color:var(--text); }
+    .user-bar-sep { flex:1; }
+    .btn-logout { background:var(--red-dim); color:var(--red); border:1px solid rgba(220,38,38,0.25); border-radius:6px; padding:4px 10px; font-size:11.5px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:all .15s; }
+    .btn-logout:hover { background:rgba(220,38,38,0.2); }
+
+    /* Main Container with Sidebar */
+    .main-container { flex:1; display:flex; width:100%; max-width:1400px; margin:0 auto; padding:16px 20px 40px; gap:18px; }
+
+    /* Sidebar History Panel */
+    .sidebar { width:280px; flex-shrink:0; background:#ffffff; border:1px solid var(--border2); border-radius:var(--r-lg); display:flex; flex-direction:column; overflow:hidden; height:calc(100vh - 120px); position:sticky; top:70px; box-shadow:0 4px 20px rgba(0,0,0,0.04); }
+    .sidebar-head { padding:12px 14px; border-bottom:1px solid var(--border); background:#f8fafc; display:flex; align-items:center; justify-content:space-between; }
+    .sidebar-title { font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px; }
+    .sidebar-search { padding:8px 12px; border-bottom:1px solid var(--border); }
+    .sidebar-input { width:100%; background:#ffffff; border:1px solid var(--border2); border-radius:6px; padding:5px 9px; color:var(--text); font-size:11.5px; outline:none; }
+    .sidebar-list { flex:1; overflow-y:auto; padding:6px; display:flex; flex-direction:column; gap:4px; }
+    .sidebar-item { padding:8px 10px; border-radius:6px; background:#f8fafc; border:1px solid var(--border); cursor:pointer; transition:all .15s; }
+    .sidebar-item:hover { background:#f1f5f9; border-color:var(--border2); }
+    .si-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+    .si-tag { font-size:9.5px; font-weight:700; padding:1px 5px; border-radius:4px; text-transform:uppercase; }
+    .tag-apex { background:var(--blue-dim); color:var(--blue); }
+    .tag-soql { background:rgba(124,58,237,0.1); color:var(--purple); }
+    .si-ts { font-size:10px; color:var(--text3); }
+    .si-code { font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+    /* Workspace Content */
+    .workspace { flex:1; display:flex; flex-direction:column; min-width:0; }
+
+    /* Mode Switcher Tabs */
+    .mode-bar { display:flex; align-items:center; gap:6px; margin-bottom:12px; }
+    .mode-btn { padding:7px 16px; border-radius:8px; border:1px solid var(--border2); background:#ffffff; color:var(--text2); font-family:'Inter',sans-serif; font-size:12.5px; font-weight:600; cursor:pointer; transition:all .15s; display:flex; align-items:center; gap:6px; }
+    .mode-btn:hover { background:#f1f5f9; color:var(--text); }
+    .mode-btn.active { background:linear-gradient(135deg,var(--blue),#0369a1); color:#fff; border-color:transparent; box-shadow:0 2px 10px rgba(2,132,199,0.3); }
+
+    /* Recent Query Chips */
+    .recent-chips { display:flex; align-items:center; gap:6px; margin-bottom:10px; overflow-x:auto; padding-bottom:2px; }
+    .chip-btn { background:#ffffff; border:1px solid var(--border2); border-radius:15px; padding:3px 10px; font-size:11px; color:var(--text2); cursor:pointer; transition:all .15s; white-space:nowrap; font-family:'JetBrains Mono',monospace; }
+    .chip-btn:hover { background:var(--blue-dim); color:var(--blue); border-color:rgba(2,132,199,0.3); }
+
+    /* Editor Card */
+    .tab-bar { display:flex; align-items:stretch; gap:2px; margin-bottom:-1px; z-index:2; padding:0 1px; }
+    .tab-item { display:flex; align-items:center; gap:6px; background:#f1f5f9; border:1px solid var(--border2); border-bottom:none; border-radius:var(--r) var(--r) 0 0; padding:6px 12px 7px; cursor:pointer; font-size:12px; font-weight:500; color:var(--text2); transition:all .15s; min-width:90px; max-width:160px; user-select:none; }
+    .tab-item:hover { background:#e2e8f0; color:var(--text); }
+    .tab-item.active { background:#ffffff; color:var(--blue); border-color:var(--border2); border-bottom-color:#ffffff; z-index:3; font-weight:600; }
+    .tab-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .tab-dot { width:6px; height:6px; border-radius:50%; background:var(--yellow); flex-shrink:0; opacity:0; transition:opacity .15s; }
+    .tab-item.dirty .tab-dot { opacity:1; }
+    .tab-x { flex-shrink:0; width:16px; height:16px; border-radius:3px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--text3); background:transparent; border:none; cursor:pointer; transition:all .15s; padding:0; }
+    .tab-x:hover { background:rgba(220,38,38,0.15); color:var(--red); }
+    .btn-del-item { background:transparent; border:none; color:var(--text3); cursor:pointer; padding:2px 5px; font-size:11px; border-radius:3px; transition:all .15s ease; line-height:1; }
+    .btn-del-item:hover { background:var(--red-dim); color:var(--red); }
+    .tab-add { display:flex; align-items:center; justify-content:center; width:30px; background:#ffffff; border:1px dashed var(--border2); border-bottom:none; border-radius:var(--r) var(--r) 0 0; cursor:pointer; font-size:18px; color:var(--text3); transition:all .15s; align-self:stretch; }
+    .tab-add:hover { color:var(--blue); border-color:rgba(2,132,199,0.35); background:var(--blue-dim); }
+
+    .editor-card { flex-shrink:0; background:#ffffff; border:1px solid var(--border2); border-radius:0 var(--r-lg) var(--r-lg) var(--r-lg); overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.04); }
+    .editor-wrap { display:flex; }
+    .gutter { min-width:44px; padding:12px 8px 12px 12px; font-family:'JetBrains Mono',monospace; font-size:12px; line-height:1.65; color:var(--text3); text-align:right; user-select:none; background:#f1f5f9; border-right:1px solid var(--border); overflow:hidden; flex-shrink:0; }
+    .code-ta { flex:1; background:#ffffff; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:12.5px; line-height:1.65; padding:12px 16px; border:none; outline:none; resize:none; tab-size:4; caret-color:var(--blue); height:190px; min-height:110px; }
+    .code-ta::placeholder { color:var(--text3); }
+    .editor-wrap:focus-within { box-shadow:inset 0 0 0 1.5px rgba(2,132,199,0.4); }
+
+    .cfg-row { display:flex; align-items:center; gap:10px; padding:8px 14px; border-top:1px solid var(--border); background:#f8fafc; flex-wrap:wrap; }
+    .cfg-grp { display:flex; align-items:center; gap:7px; }
+    .cfg-grp label { font-size:11.5px; font-weight:600; color:var(--text2); white-space:nowrap; }
+    select.sel { background:#ffffff; color:var(--text); border:1px solid var(--border2); border-radius:6px; padding:5px 26px 5px 9px; font-family:'Inter',sans-serif; font-size:12px; font-weight:500; outline:none; cursor:pointer; appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 11 7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2364748b' stroke-width='1.4' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 8px center; }
+    select.sel option { background:#ffffff; color:#0f172a; }
+    .cfg-sep { flex:1; }
+    kbd { background:#f1f5f9; border:1px solid var(--border2); border-radius:4px; padding:1px 5px; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text2); }
+
+    /* Buttons */
+    .btn { display:inline-flex; align-items:center; gap:5px; padding:6px 13px; border-radius:6px; border:none; font-family:'Inter',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all .15s; flex-shrink:0; }
+    .btn-ghost { background:#ffffff; color:var(--text2); border:1px solid var(--border2); }
+    .btn-ghost:hover { background:#f1f5f9; color:var(--text); border-color:var(--border2); }
+    .btn-exec { background:linear-gradient(135deg,var(--blue),#0369a1); color:#fff; box-shadow:0 2px 12px rgba(2,132,199,0.3); padding:7px 20px; font-size:13px; }
+    .btn-exec:hover { transform:translateY(-1px); box-shadow:0 4px 18px rgba(2,132,199,0.45); }
+    .btn-exec:disabled { opacity:.4; cursor:not-allowed; transform:none !important; box-shadow:none; }
+    .btn-dl { background:var(--green-dim); color:var(--green); border:1px solid rgba(22,163,74,0.25); }
+    .btn-dl:hover { background:rgba(22,163,74,0.18); }
+    .btn-sm { padding:4px 9px; font-size:11px; }
+    .btn-danger-sm { background:var(--red-dim); color:var(--red); border:1px solid rgba(220,38,38,0.25); }
+
+    /* Status */
+    .status-badge { display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:500; padding:4px 10px; border-radius:20px; opacity:0; transform:translateY(3px); transition:all .22s; }
+    .status-badge.show { opacity:1; transform:none; }
+    .sb-run { background:var(--blue-dim); color:var(--blue); border:1px solid rgba(2,132,199,0.25); }
+    .sb-ok  { background:var(--green-dim); color:var(--green); border:1px solid rgba(22,163,74,0.25); }
+    .sb-err { background:var(--red-dim); color:var(--red); border:1px solid rgba(220,38,38,0.25); }
+    .spin-xs { width:10px; height:10px; border-radius:50%; border:2px solid rgba(2,132,199,0.25); border-top-color:var(--blue); animation:spin .6s linear infinite; }
+
+    /* Output Section */
+    .out-section { display:flex; flex-direction:column; margin-top:16px; }
+    .out-tabs { display:flex; gap:2px; margin-bottom:-1px; }
+    .out-tab { background:#f1f5f9; border:1px solid var(--border2); border-bottom:none; color:var(--text3); font-family:'Inter',sans-serif; font-size:12px; font-weight:600; padding:6px 14px; cursor:pointer; border-radius:6px 6px 0 0; transition:all .15s; }
+    .out-tab:hover { color:var(--text2); }
+    .out-tab.active { background:#ffffff; border-color:var(--border2); color:var(--blue); }
+    .out-card { display:flex; flex-direction:column; background:#ffffff; border:1px solid var(--border2); border-radius:0 var(--r-lg) var(--r-lg) var(--r-lg); overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.04); }
+    .out-head { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; border-bottom:1px solid var(--border); background:#f8fafc; flex-shrink:0; }
+    .out-head-l { display:flex; align-items:center; gap:10px; }
+    .out-label { font-size:12px; font-weight:600; color:var(--text2); }
+    .out-meta  { font-size:11px; color:var(--text3); }
+    .out-acts  { display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+    #out-body { padding:16px 20px; font-family:'JetBrains Mono',monospace; font-size:11.5px; line-height:1.7; min-height:160px; background:#ffffff; }
+
+    /* Data Table for SOQL Results */
+    .result-table-wrap { overflow-x:auto; max-width:100%; }
+    table.data-table { width:100%; border-collapse:collapse; font-size:11.5px; font-family:'JetBrains Mono',monospace; text-align:left; }
+    table.data-table th { background:#f1f5f9; color:var(--blue); padding:8px 12px; border-bottom:1px solid var(--border2); font-weight:600; white-space:nowrap; }
+    table.data-table td { padding:7px 12px; border-bottom:1px solid var(--border); color:var(--text); word-break:break-all; max-width:300px; }
+    table.data-table tr:hover td { background:#f8fafc; }
+
+    .empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; min-height:140px; gap:8px; color:var(--text3); }
+    .empty-ico { font-size:34px; opacity:.22; }
+    .log-line { display:flex; gap:10px; padding:1px 0; animation:fd .15s ease; }
+    @keyframes fd { from{opacity:0;transform:translateX(-4px)} to{opacity:1} }
+    .ll-ts  { color:var(--text3); flex-shrink:0; min-width:80px; font-size:10.5px; }
+    .ll-cat { color:var(--text3); flex-shrink:0; min-width:80px; font-size:10.5px; }
+    .ll-msg { flex:1; word-break:break-all; }
+    .c-user-debug { color: #0284c7; font-weight: 700; background: rgba(2,132,199,0.1); padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(2,132,199,0.25); display: inline-block; }
+    .c-debug      { color: #0284c7; font-weight: 600; }
+    .c-info       { color: #16a34a; }
+    .c-warn       { color: #d97706; }
+    .c-error      { color: #dc2626; font-weight: 700; }
+    .c-fine       { color: #7c3aed; }
+    .c-exec       { color: #7c3aed; font-weight: 600; }
+    .c-codeunit   { color: #64748b; }
+    .c-var        { color: #d97706; }
+    .c-def        { color: #334155; }
+
+    .banner { display:flex; align-items:flex-start; gap:9px; padding:9px 12px; border-radius:7px; font-size:12px; font-weight:500; line-height:1.65; margin-bottom:8px; }
+    .b-ok   { background:var(--green-dim); color:var(--green); border:1px solid rgba(22,163,74,0.2); }
+    .b-err  { background:var(--red-dim);   color:var(--red);   border:1px solid rgba(220,38,38,0.2); }
+    .b-info { background:var(--blue-dim);  color:var(--blue);  border:1px solid rgba(2,132,199,0.2); }
+    .raw-pre { white-space:pre-wrap; word-break:break-all; font-size:11px; color:var(--text); }
+
+    /* Modal */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); backdrop-filter:blur(6px); z-index:500; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.show { display:flex; }
+    .modal-card { background:#ffffff; border:1px solid var(--border2); border-radius:16px; width:100%; max-width:700px; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 25px 50px rgba(0,0,0,0.15); }
+    .modal-head { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:#f8fafc; }
+    .modal-head h3 { font-size:15px; font-weight:700; color:var(--text); }
+    .modal-body { flex:1; overflow-y:auto; padding:16px 18px; display:flex; flex-direction:column; gap:8px; }
+  </style>
+</head>
+<body>
+<div class="orbs"><i></i><i></i></div>
+
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo">⚡</div>
+    Lapex Flash
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-ghost btn-sm" onclick="syncMetadata()" id="btn-sync-metadata">🔄 Sync Metadata</button>
+    <button class="btn btn-ghost btn-sm" onclick="openGlobalSearch()" id="btn-global-search">🔍 Global Search</button>
+    <button class="btn-logout" onclick="doLogout()" id="btn-topbar-logout" style="display:none;">↩ Logout</button>
+  </div>
+</header>
+
+<!-- ══════════════════════════════════════════════
+     LOGIN SCREEN
+══════════════════════════════════════════════ -->
+<div id="screen-login" class="screen active">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="login-logo-icon">⚡</div>
+      <div class="login-logo-text">
+        <h1>Lapex Flash</h1>
+        <p>Salesforce Developer Studio</p>
+      </div>
+    </div>
+
+    <div class="login-error" id="login-error"></div>
+
+    <div style="display:flex;gap:4px;margin-bottom:20px;background:var(--panel2);border-radius:10px;padding:4px;border:1px solid var(--border)">
+      <button id="tab-sid" onclick="switchLoginTab('sid')" style="flex:1;padding:8px;border-radius:7px;border:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:linear-gradient(135deg,var(--blue),#0369a1);color:#fff;transition:all .15s">🔑 Session ID</button>
+      <button id="tab-soap" onclick="switchLoginTab('soap')" style="flex:1;padding:8px;border-radius:7px;border:none;font-family:'Inter',sans-serif;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--text2);transition:all .15s">🔐 Username & Password</button>
+    </div>
+
+    <div id="panel-sid">
+      <button class="btn btn-ghost" style="width:100%;margin-bottom:14px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed var(--blue);color:var(--blue);background:var(--blue-dim);font-weight:600;padding:10px;" onclick="autoDetectSessionFromTab()">
+        ⚡ Auto-Detect Session from Active Tab
+      </button>
+      <div class="form-group">
+        <label for="sid-inst">Instance URL</label>
+        <input id="sid-inst" class="form-input" type="text" placeholder="https://yourorg.my.salesforce.com" spellcheck="false" />
+      </div>
+      <div class="form-group" style="margin-bottom:20px">
+        <label for="sid-val">Session ID (sid)</label>
+        <input id="sid-val" class="form-input" type="password" placeholder="Paste sid cookie or Session ID (00D...)" spellcheck="false" autocomplete="off" />
+      </div>
+      <button class="btn-login" onclick="doSidLogin()">
+        <span id="sid-btn-text">⚡ Connect with Session ID</span>
+      </button>
+    </div>
+
+    <div id="panel-soap" style="display:none">
+      <div class="form-group">
+        <label for="env">Environment</label>
+        <select id="env" class="form-input">
+          <option value="login">Production / Developer Org</option>
+          <option value="test">Sandbox (test.salesforce.com)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="sf-username">Username</label>
+        <input id="sf-username" class="form-input" type="email" placeholder="user@example.com" autocomplete="username" />
+      </div>
+      <div class="form-row" style="margin-bottom:20px">
+        <div class="form-group" style="margin-bottom:0">
+          <label for="sf-password">Password</label>
+          <input id="sf-password" class="form-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label for="sf-token">Security Token</label>
+          <input id="sf-token" class="form-input" type="password" placeholder="Optional" />
+        </div>
+      </div>
+      <button id="btn-login" class="btn-login" onclick="doLogin()">
+        <span id="login-btn-content">🔐 Log in to Salesforce</span>
+      </button>
+    </div>
+
+    <!-- Recent Sessions Container -->
+    <div id="recent-sessions-wrap" style="margin-top:20px;display:none;border-top:1px solid var(--border);padding-top:14px;">
+      <div style="font-size:11.5px;font-weight:600;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+        <span>⚡ Recent Sessions (1-Click Reconnect)</span>
+        <button class="btn-del-item" onclick="clearRecentSessions()" title="Clear Recent Sessions">Clear All</button>
+      </div>
+      <div id="recent-sessions-list" style="display:flex;flex-direction:column;gap:6px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     EXECUTE & QUERY MAIN SCREEN
+══════════════════════════════════════════════ -->
+<div id="screen-exec" class="screen">
+
+  <div class="main-container">
+
+    <!-- Left Sidebar History -->
+    <aside class="sidebar" id="sidebar-panel">
+      <div class="sidebar-head">
+        <span class="sidebar-title">📜 History</span>
+        <button class="btn btn-ghost btn-xs" onclick="openHistoryModal()">Full History</button>
+      </div>
+      <div class="sidebar-search">
+        <input id="history-search" class="sidebar-input" type="text" placeholder="Search history..." oninput="renderSidebarHistory()" />
+      </div>
+      <div class="sidebar-list" id="sidebar-list">
+        <!-- Rendered dynamically -->
+      </div>
+    </aside>
+
+    <!-- Workspace -->
+    <div class="workspace">
+
+      <!-- Mode Switcher -->
+      <div class="mode-bar">
+        <button id="mode-apex" class="mode-btn active" onclick="switchMode('apex')">⚡ Apex Execute</button>
+        <button id="mode-soql" class="mode-btn" onclick="switchMode('soql')">🔍 SOQL Query Runner</button>
+        <button id="mode-fieldperm" class="mode-btn" onclick="switchMode('fieldperm')">🛡️ Field Permissions</button>
+      </div>
+
+      <!-- Recent Query Chips (SOQL mode) -->
+      <div class="recent-chips" id="recent-chips" style="display:none; align-items: center;">
+        <span style="font-size:11px;color:var(--text3);font-weight:600;">Recent:</span>
+        <div id="chips-list" style="display:flex;gap:5px;overflow-x:auto;flex:1;"></div>
+        <span id="soql-object-label" style="font-size:11.5px;color:var(--blue);font-weight:600;margin-left:auto;display:none;padding:4px 10px;background:var(--blue-dim);border-radius:12px;border:1px solid rgba(2,132,199,0.2);white-space:nowrap;"></span>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-bar" id="tab-bar">
+        <button class="tab-add" id="btn-add-tab" onclick="addTab()" title="New tab">+</button>
+      </div>
+
+      <!-- Editor Card -->
+      <div class="editor-card">
+        <div class="editor-wrap">
+          <div class="gutter" id="gutter">1</div>
+          <textarea id="code-ta" class="code-ta" spellcheck="false" autocorrect="off" autocomplete="off"
+            placeholder="// Enter Apex code to execute..."></textarea>
+        </div>
+
+        <div class="cfg-row">
+          <!-- Apex Config -->
+          <div id="cfg-apex" style="display:flex;align-items:center;gap:10px;">
+            <div class="cfg-grp">
+              <label for="LogCategory">Category:</label>
+              <select id="LogCategory" class="sel">
+                <option value="Apex_Code" selected>Apex Code</option>
+                <option value="Callout">Callout</option>
+                <option value="DB">DB</option>
+                <option value="System">System</option>
+                <option value="Validation">Validation</option>
+                <option value="Workflow">Workflow</option>
+              </select>
+            </div>
+            <div class="cfg-grp">
+              <label for="LogLevel">Level:</label>
+              <select id="LogLevel" class="sel">
+                <option value="NONE">None</option>
+                <option value="ERROR">Error</option>
+                <option value="WARN">Warn</option>
+                <option value="INFO">Info</option>
+                <option value="DEBUG" selected>Debug</option>
+                <option value="FINE">Fine</option>
+                <option value="FINEST">Finest</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- SOQL Config -->
+          <div id="cfg-soql" style="display:none;align-items:center;gap:10px;">
+            <label style="font-size:11.5px;color:var(--text2);cursor:pointer;display:flex;align-items:center;gap:5px;">
+              <input type="checkbox" id="chk-tooling" /> Tooling API
+            </label>
+            <button class="btn btn-ghost btn-sm" onclick="formatSOQL()">✨ Format SOQL</button>
+          </div>
+
+          <!-- Field Perm Config -->
+          <div id="cfg-fieldperm" style="display:none;align-items:center;gap:10px;">
+            <div class="cfg-grp">
+              <label for="fp-sobject">Object:</label>
+              <input type="text" id="fp-sobject" class="sidebar-input" placeholder="e.g. Account" style="width:120px;" />
+            </div>
+            <div class="cfg-grp">
+              <label for="fp-field">Field:</label>
+              <input type="text" id="fp-field" class="sidebar-input" placeholder="e.g. Account.Industry" style="width:180px;" />
+            </div>
+          </div>
+
+          <div class="cfg-sep"></div>
+          <button class="btn btn-ghost btn-sm" onclick="renameActiveTab()" title="Rename current tab">✏️ Rename</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadSample()">📄 Sample</button>
+          <button class="btn btn-ghost btn-sm" onclick="copyCode()">📋 Copy</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearEditor()">🗑️ Clear</button>
+          <span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px"><kbd>Ctrl</kbd>+<kbd>Enter</kbd> to run</span>
+        </div>
+
+        <div class="cfg-row" style="border-top:1px solid var(--border2);">
+          <button id="btn-exec" class="btn btn-exec" onclick="runCurrent()">▶ Run</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetTab()">↺ Reset</button>
+          <div class="status-badge" id="status-badge">
+            <div class="spin-xs" id="spin" style="display:none"></div>
+            <span id="status-text"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output Section -->
+      <div class="out-section">
+        <div class="out-tabs">
+          <button class="out-tab active" id="ot-log"  onclick="switchOutTab('log')">Results / Log</button>
+          <button class="out-tab"        id="ot-json" onclick="switchOutTab('json')">JSON View</button>
+        </div>
+        <div class="out-card">
+          <div class="out-head">
+            <div class="out-head-l">
+              <span class="out-label" id="out-label">Output</span>
+              <span class="out-meta"  id="out-meta"></span>
+            </div>
+            <div class="out-acts">
+              <!-- Export Options -->
+              <div id="soql-exports" style="display:none;gap:4px;align-items:center;">
+                <button class="btn btn-exec btn-sm" onclick="runBulkExport()" title="Fastest export for 50M+ records via Salesforce Bulk API 2.0">🚀 Bulk 2.0 Export</button>
+                <button class="btn btn-ghost btn-sm" onclick="runParallelExport()" style="border-color:rgba(234,179,8,0.4);color:var(--yellow);" title="Multi-threaded parallel worker extraction">⚡ Parallel Export</button>
+                <button class="btn btn-ghost btn-sm" onclick="copyAsApex()">📋 Copy as Apex</button>
+                <button class="btn btn-ghost btn-sm" onclick="copyAscURL()">📋 Copy as cURL</button>
+                <button class="btn btn-ghost btn-sm" onclick="copyAsMarkdown()">📋 Copy as MD</button>
+                <button class="btn btn-dl btn-sm" onclick="downloadCSV()">⬇ CSV</button>
+              </div>
+              <button class="btn btn-dl btn-sm" id="btn-dl" onclick="downloadLog()" style="display:none">⬇ Download .txt</button>
+              <button class="btn btn-ghost btn-sm" onclick="copyOutput()">📋 Copy</button>
+              <button class="btn btn-danger-sm btn-sm" onclick="clearOutput()">✕ Clear</button>
+            </div>
+          </div>
+          <div id="out-body">
+            <div class="empty-state"><div class="empty-ico">📭</div><span>No output yet — write code/query and hit Run</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /workspace -->
+
+  </div><!-- /main-container -->
+</div>
+
+<!-- ══════════════════════════════════════════════
+     HISTORY MANAGEMENT MODAL
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="history-modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>📜 History Management</h3>
+      <button class="btn btn-ghost btn-xs" onclick="closeHistoryModal()">✕</button>
+    </div>
+    <div style="padding:10px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;">
+      <input id="modal-search" class="sidebar-input" style="flex:1;" type="text" placeholder="Filter history..." oninput="renderModalHistory()" />
+      <button class="btn btn-ghost btn-sm" onclick="exportHistoryJson()">⬇ Export JSON</button>
+      <button class="btn btn-danger-sm btn-sm" onclick="clearAllHistory()">🗑️ Clear All</button>
+    </div>
+    <div class="modal-body" id="modal-history-list">
+      <!-- Dynamic list -->
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     SAVED LOGS MODAL (SERVER LOGS FOLDER)
+══════════════════════════════════════════════ -->
+<div class="modal-overlay" id="saved-logs-modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <h3>📂 Server Saved Logs Folder</h3>
+      <button class="btn btn-ghost btn-xs" onclick="closeSavedLogsModal()">✕</button>
+    </div>
+    <div style="padding:10px 18px;border-bottom:1px solid var(--border);font-size:11.5px;color:var(--text2);display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <span>Server folder: <code style="color:var(--green);" id="logs-folder-path">.../RedLine/logs</code></span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="btn btn-ghost btn-xs" onclick="fetchSavedLogs()">🔄 Refresh</button>
+        <button class="btn btn-danger-sm btn-xs" onclick="deleteAllSavedLogs()">🗑️ Clear All Logs</button>
+      </div>
+    </div>
+    <div class="modal-body" id="saved-logs-list">
+      <!-- Dynamic list from GET /saved-logs -->
+    </div>
+  </div>
+</div>
+
+<script>
+const SERVER = (window.location.protocol === 'file:') ? 'http://localhost:3000' : '';
+
+/* ── State ── */
+let currentMode = 'apex'; // 'apex' or 'soql'
+let session = { sessionId: null, instanceUrl: null, userName: null, orgName: null, displayName: null };
+let historyList = [];
+
+/* ── Recent & Auto Sessions ── */
+function saveRecentSession(s) {
+  if (!s || !s.sessionId || !s.instanceUrl) return;
+  try {
+    let list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
+    list = list.filter(item => item.instanceUrl !== s.instanceUrl || item.sessionId !== s.sessionId);
+    list.unshift({
+      sessionId: s.sessionId,
+      instanceUrl: s.instanceUrl,
+      userName: s.userName || s.displayName || 'Connected User',
+      orgName: s.orgName || '',
+      timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('sf_recent_sessions', JSON.stringify(list.slice(0, 8)));
+    renderRecentSessions();
+  } catch(_) {}
+}
+
+function renderRecentSessions() {
+  const wrap = document.getElementById('recent-sessions-wrap');
+  const listEl = document.getElementById('recent-sessions-list');
+  if (!wrap || !listEl) return;
+  try {
+    const list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
+    if (!list || list.length === 0) {
+      wrap.style.display = 'none';
+      return;
+    }
+    wrap.style.display = 'block';
+    listEl.innerHTML = '';
+    list.forEach((item, idx) => {
+      const card = document.createElement('div');
+      card.className = 'sidebar-item';
+      card.style.padding = '8px 10px';
+      card.style.border = '1px solid var(--border)';
+      card.style.borderRadius = '6px';
+      card.style.background = 'var(--panel2)';
+      card.style.cursor = 'pointer';
+      const host = item.instanceUrl.replace(/^https?:\/\//, '');
+      const timeAgo = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+      card.innerHTML = `
+        <div class="si-top" style="margin-bottom:2px;">
+          <span style="font-size:11.5px;font-weight:600;color:var(--text);">${esc(item.userName)}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="si-ts">${timeAgo}</span>
+            <button class="btn-del-item" title="Remove from recents" onclick="removeRecentSession(${idx}, event)">✕</button>
+          </div>
+        </div>
+        <div style="font-size:10.5px;color:var(--blue);font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+          🔗 ${esc(host)}
+        </div>
+      `;
+      card.addEventListener('click', () => useRecentSession(idx));
+      listEl.appendChild(card);
+    });
+  } catch(_) {}
+}
+
+function useRecentSession(idx) {
+  try {
+    const list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
+    const item = list[idx];
+    if (!item) return;
+    document.getElementById('sid-inst').value = item.instanceUrl;
+    document.getElementById('sid-val').value  = item.sessionId;
+    switchLoginTab('sid');
+    doSidLogin();
+  } catch(_) {}
+}
+
+function removeRecentSession(idx, e) {
+  if (e) e.stopPropagation();
+  try {
+    let list = JSON.parse(localStorage.getItem('sf_recent_sessions') || '[]');
+    list.splice(idx, 1);
+    localStorage.setItem('sf_recent_sessions', JSON.stringify(list));
+    renderRecentSessions();
+  } catch(_) {}
+}
+
+function clearRecentSessions() {
+  localStorage.removeItem('sf_recent_sessions');
+  renderRecentSessions();
+}
+
+async function autoDetectSessionFromTab() {
+  const errEl = document.getElementById('login-error');
+  errEl.className = 'login-error';
+  errEl.style.display = 'none';
+
+  // 1. Check Chrome Extension messaging if running inside Chrome with extension
+  if (window.chrome && chrome.runtime && chrome.runtime.sendMessage) {
+    try {
+      chrome.runtime.sendMessage({ type: 'GET_SESSION' }, (resp) => {
+        if (resp && resp.found && resp.sessionId && resp.instanceUrl) {
+          document.getElementById('sid-inst').value = resp.instanceUrl;
+          document.getElementById('sid-val').value  = resp.sessionId;
+          switchLoginTab('sid');
+          doSidLogin();
+          return;
+        }
+      });
+    } catch(_) {}
+  }
+
+  // 2. Try reading clipboard for sid
+  try {
+    const text = await navigator.clipboard.readText();
+    if (text && text.trim()) {
+      const clean = text.trim().replace(/^["']|["']$/g, '');
+      if (clean.startsWith('00D') || clean.length > 40) {
+        document.getElementById('sid-val').value = clean;
+        errEl.textContent = '⚡ Pasted Session ID from clipboard! Enter Instance URL if needed and click Connect.';
+        errEl.className = 'login-error show';
+        errEl.style.display = 'block';
+        errEl.style.background = 'var(--blue-dim)';
+        errEl.style.color = 'var(--blue)';
+        errEl.style.borderColor = 'rgba(2,132,199,0.3)';
+        return;
+      }
+    }
+  } catch(_) {}
+
+  // 3. Fallback guidance
+  errEl.textContent = '💡 Tip: Open Salesforce in a browser tab and use the Lapex Flash Chrome Extension side panel for 1-click zero-login auto session detection!';
+  errEl.className = 'login-error show';
+  errEl.style.display = 'block';
+  errEl.style.background = 'var(--blue-dim)';
+  errEl.style.color = 'var(--blue)';
+  errEl.style.borderColor = 'rgba(2,132,199,0.3)';
+}
+
+function loadSession() {
+  try {
+    const s = JSON.parse(localStorage.getItem('sf_session_v2') || 'null');
+    if (s && s.sessionId && s.instanceUrl) {
+      session = s;
+      setTimeout(() => { getSfObjects(); }, 300);
+      return true;
+    }
+  } catch(_) {}
+  return false;
+}
+function saveSession() {
+  localStorage.setItem('sf_session_v2', JSON.stringify(session));
+  if (session && session.sessionId) {
+    setTimeout(() => { getSfObjects(); }, 300);
+  }
+}
+function clearSession() { localStorage.removeItem('sf_session_v2'); session = {}; sfObjectList = null; }
+
+function loadHistory() {
+  try { historyList = JSON.parse(localStorage.getItem('app_history') || '[]'); } catch(_) { historyList = []; }
+  renderSidebarHistory();
+  renderRecentChips();
+}
+function saveHistory() {
+  localStorage.setItem('app_history', JSON.stringify(historyList.slice(0, 100)));
+  renderSidebarHistory();
+  renderRecentChips();
+}
+function addHistoryItem(item) {
+  item.id = Date.now();
+  item.timestamp = new Date().toISOString();
+  historyList.unshift(item);
+  saveHistory();
+}
+
+/* ── Login Handlers ── */
+function switchLoginTab(type) {
+  const isSid = type === 'sid';
+  document.getElementById('panel-sid').style.display  = isSid ? 'block' : 'none';
+  document.getElementById('panel-soap').style.display = isSid ? 'none'  : 'block';
+  document.getElementById('tab-sid').style.background  = isSid ? 'linear-gradient(135deg,var(--blue),#0369a1)' : 'transparent';
+  document.getElementById('tab-sid').style.color       = isSid ? '#fff' : 'var(--text2)';
+  document.getElementById('tab-soap').style.background = isSid ? 'transparent' : 'linear-gradient(135deg,var(--blue),#0369a1)';
+  document.getElementById('tab-soap').style.color      = isSid ? 'var(--text2)' : '#fff';
+}
+
+async function doSidLogin() {
+  let instUrl = document.getElementById('sid-inst').value.trim();
+  let sid     = document.getElementById('sid-val').value.trim().replace(/^["']|["']$/g, '');
+  const errEl = document.getElementById('login-error');
+  errEl.className = 'login-error';
+  errEl.style.display = 'none';
+
+  if (!instUrl || !sid) {
+    errEl.textContent = 'Please enter both Instance URL and Session ID.';
+    errEl.className = 'login-error show';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if (!instUrl.startsWith('http://') && !instUrl.startsWith('https://')) {
+    instUrl = 'https://' + instUrl;
+  }
+
+  document.getElementById('sid-btn-text').textContent = '⏳ Verifying session…';
+
+  try {
+    const r = await fetch(`${SERVER}/verify`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: sid, instanceUrl: instUrl }),
+    });
+    const data = await r.json();
+    if (!data.ok) {
+      errEl.textContent = 'Invalid session: ' + (data.error || 'Verification failed');
+      errEl.className = 'login-error show';
+      errEl.style.display = 'block';
+      return;
+    }
+    session = { sessionId: sid, instanceUrl: instUrl, userName: data.name || data.email || 'Connected User', orgName: data.orgId || '', displayName: data.name || data.email || 'Connected User' };
+    saveSession();
+    saveRecentSession(session);
+    showExecScreen();
+  } catch(e) {
+    errEl.textContent = '❌ Cannot reach local server (http://localhost:3000). Make sure server is running!';
+    errEl.className = 'login-error show';
+    errEl.style.display = 'block';
+  } finally {
+    document.getElementById('sid-btn-text').textContent = '⚡ Connect with Session ID';
+  }
+}
+
+async function doLogin() {
+  const username = document.getElementById('sf-username').value.trim();
+  const password = document.getElementById('sf-password').value;
+  const token    = document.getElementById('sf-token').value;
+  const env      = document.getElementById('env').value;
+  const errEl    = document.getElementById('login-error');
+  errEl.className = 'login-error';
+  errEl.style.display = 'none';
+
+  if (!username || !password) {
+    errEl.textContent = 'Please enter your username and password.';
+    errEl.className = 'login-error show';
+    errEl.style.display = 'block';
+    return;
+  }
+  const btn = document.getElementById('btn-login'); btn.disabled = true;
+  document.getElementById('login-btn-content').textContent = '⏳ Logging in to Salesforce…';
+
+  try {
+    const r = await fetch(`${SERVER}/login`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, securityToken: token, environment: env, apiVersion: '66.0' }),
+    });
+    const data = await r.json();
+    if (!data.ok) {
+      errEl.textContent = data.error || 'Login failed.';
+      errEl.className = 'login-error show';
+      errEl.style.display = 'block';
+      return;
+    }
+    session = { sessionId: data.sessionId, instanceUrl: data.instanceUrl, userName: data.userName, orgName: data.orgName, displayName: data.displayName || data.userName };
+    saveSession();
+    saveRecentSession(session);
+    showExecScreen();
+  } catch(e) {
+    errEl.textContent = '❌ ' + e.message;
+    errEl.className = 'login-error show';
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; document.getElementById('login-btn-content').textContent = '🔐 Log in to Salesforce';
+  }
+}
+
+async function doLogout() {
+  clearSession();
+  showLoginScreen();
+  renderRecentSessions();
+}
+
+function showExecScreen() {
+  const loginScr = document.getElementById('screen-login');
+  const execScr  = document.getElementById('screen-exec');
+
+  loginScr.classList.remove('active');
+  loginScr.style.display = 'none';
+
+  execScr.classList.add('active');
+  execScr.style.display = 'flex';
+
+  const loBtn = document.getElementById('btn-topbar-logout');
+  if (loBtn) loBtn.style.display = 'inline-flex';
+
+  loadHistory();
+  if (cmEditor) setTimeout(() => cmEditor.refresh(), 50);
+}
+
+function showLoginScreen() {
+  const loginScr = document.getElementById('screen-login');
+  const execScr  = document.getElementById('screen-exec');
+
+  execScr.classList.remove('active');
+  execScr.style.display = 'none';
+
+  loginScr.classList.add('active');
+  loginScr.style.display = 'flex';
+
+  const loBtn = document.getElementById('btn-topbar-logout');
+  if (loBtn) loBtn.style.display = 'none';
+}
+
+/* ── Mode Switcher ── */
+function switchMode(mode) {
+  // Save active code in current workspace tab before switching
+  const oldWS = getWS();
+  if (oldWS && oldWS.activeTabId && oldWS.tabs[oldWS.activeTabId]) {
+    oldWS.tabs[oldWS.activeTabId].code = ta().value;
+  }
+
+  currentMode = mode;
+  document.getElementById('mode-apex').classList.toggle('active', mode === 'apex');
+  document.getElementById('mode-soql').classList.toggle('active', mode === 'soql');
+  document.getElementById('mode-fieldperm').classList.toggle('active', mode === 'fieldperm');
+  
+  document.getElementById('cfg-apex').style.display   = mode === 'apex' ? 'flex' : 'none';
+  document.getElementById('cfg-soql').style.display   = mode === 'soql' ? 'flex' : 'none';
+  document.getElementById('cfg-fieldperm').style.display = mode === 'fieldperm' ? 'flex' : 'none';
+  
+  document.getElementById('recent-chips').style.display = mode === 'soql' ? 'flex' : 'none';
+  document.getElementById('soql-exports').style.display = mode === 'soql' ? 'flex' : 'none';
+  
+  document.getElementById('btn-exec').textContent = mode === 'apex' ? '▶ Execute Apex' : mode === 'soql' ? '▶ Run SOQL' : '🛡️ Check Perms';
+  
+  if (mode === 'fieldperm' && cmEditor) {
+    document.querySelector('.editor-wrap').style.display = 'none';
+  } else if (cmEditor) {
+    document.querySelector('.editor-wrap').style.display = 'flex';
+    cmEditor.setOption('mode', mode === 'soql' ? 'text/x-sql' : 'text/x-java');
+    setTimeout(() => { cmEditor.refresh(); }, 150);
+  }
+
+  const newWS = getWS();
+  if (!newWS) return; // For fieldperm we might not need tabs, but let's just clear editor
+  if (!newWS.activeTabId || !newWS.tabs[newWS.activeTabId]) {
+    const id = createTab(mode);
+    newWS.activeTabId = id;
+  }
+
+  switchTab(newWS.activeTabId, true /* isModeSwitch */);
+  // Clear text area when switching tabs (as requested by user)
+  if (cmEditor && mode !== 'fieldperm') {
+    cmEditor.setValue('');
+    setTimeout(() => { cmEditor.refresh(); }, 150);
+  }
+  renderSidebarHistory();
+}
+
+function runCurrent() {
+  if (currentMode === 'apex') executeApex();
+  else if (currentMode === 'soql') runSOQL();
+  else if (currentMode === 'fieldperm') checkFieldPerms();
+}
+
+/* ── SOQL Runner & Formatter ── */
+function formatSOQL() {
+  let q = ta().value;
+  if (!q.trim()) return;
+  const keywords = ['SELECT', 'FROM', 'WHERE', 'WITH', 'GROUP BY', 'HAVING', 'ORDER BY', 'LIMIT', 'OFFSET'];
+  let formatted = q.replace(/\s+/g, ' ');
+  keywords.forEach(kw => {
+    const re = new RegExp('\\b' + kw + '\\b', 'gi');
+    formatted = formatted.replace(re, '\n' + kw);
+  });
+  ta().value = formatted.trim();
+  updateGutter();
+}
+
+async function runSOQL() {
+  const query = ta().value.trim();
+  if (!query) { ta().focus(); return; }
+  if (!session.sessionId) { alert('Session expired.'); return; }
+
+  const isTooling = document.getElementById('chk-tooling').checked;
+  const btn = document.getElementById('btn-exec'); btn.disabled = true;
+  setStatus('sb-run', 'Querying…', true);
+  document.getElementById('out-body').innerHTML = '<div class="empty-state"><div class="empty-ico">⏳</div><span>Executing SOQL query…</span></div>';
+
+  const t0 = Date.now(), ts = new Date();
+
+  try {
+    const r = await fetch(`${SERVER}/query`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, isTooling, sessionId: session.sessionId, instanceUrl: session.instanceUrl }),
+    });
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(2) + 's';
+    const data = await r.json();
+
+    if (!r.ok || data.error) throw new Error(data.error || 'Query failed');
+
+    const output = {
+      mode: 'soql', raw: data, success: true,
+      label: `✅ Query Results (${data.records.length} of ${data.totalSize})`,
+      meta: '⏱ ' + elapsed, query, isTooling, timestamp: ts.toISOString(), elapsed
+    };
+
+    const activeTab = getActiveTab();
+    if (activeTab) { activeTab.output = output; activeTab.dirty = false; renderTabBar(); }
+
+    document.getElementById('out-label').textContent = output.label;
+    document.getElementById('out-meta').textContent  = output.meta;
+    document.getElementById('soql-exports').style.display = 'flex';
+
+    renderOutTab(currentOutTab, output);
+    setStatus('sb-ok', `✓ ${data.records.length} records in ${elapsed}`);
+
+    addHistoryItem({ mode: 'soql', code: query, success: true, count: data.records.length, elapsed });
+
+  } catch(err) {
+    document.getElementById('out-body').innerHTML = `<div class="banner b-err">❌ ${esc(err.message)}</div>`;
+    setStatus('sb-err', '✗ Query Error');
+    addHistoryItem({ mode: 'soql', code: query, success: false, error: err.message, elapsed: '0s' });
+  } finally { btn.disabled = false; }
+}
+
+function getActiveTab() {
+  const ws = getWS();
+  return (ws && ws.activeTabId) ? ws.tabs[ws.activeTabId] : null;
+}
+
+function getActiveSOQLData() {
+  const tab = getActiveTab();
+  return tab && tab.output && tab.output.mode === 'soql' ? tab.output : null;
+}
+
+async function copyAsApex() {
+  const out = getActiveSOQLData();
+  const query = out ? out.query : ta().value;
+  const apex = `List<sObject> records = [${query}];\nSystem.debug('Fetched: ' + records.size());`;
+  await navigator.clipboard.writeText(apex);
+  alert('Copied Apex code to clipboard!');
+}
+
+async function copyAscURL() {
+  const out = getActiveSOQLData();
+  const query = out ? out.query : ta().value;
+  const url = `${session.instanceUrl}/services/data/v66.0/query?q=${encodeURIComponent(query)}`;
+  const curl = `curl "${url}" -H "Authorization: Bearer ${session.sessionId}"`;
+  await navigator.clipboard.writeText(curl);
+  alert('Copied cURL command to clipboard!');
+}
+
+async function copyAsMarkdown() {
+  const out = getActiveSOQLData();
+  if (!out || !out.raw.records.length) { alert('No query records to export'); return; }
+  const recs = out.raw.records;
+  const keys = Object.keys(recs[0]).filter(k => k !== 'attributes');
+  let md = '| ' + keys.join(' | ') + ' |\n';
+  md += '| ' + keys.map(() => '---').join(' | ') + ' |\n';
+  recs.forEach(r => {
+    md += '| ' + keys.map(k => String(r[k] ?? '')).join(' | ') + ' |\n';
+  });
+  await navigator.clipboard.writeText(md);
+  alert('Copied Markdown table to clipboard!');
+}
+
+function downloadCSV() {
+  const out = getActiveSOQLData();
+  if (!out || !out.raw.records.length) { alert('No query records to download'); return; }
+  const recs = out.raw.records;
+  const keys = Object.keys(recs[0]).filter(k => k !== 'attributes');
+  let csv = keys.join(',') + '\n';
+  recs.forEach(r => {
+    csv += keys.map(k => `"${String(r[k] ?? '').replace(/"/g, '""')}"`).join(',') + '\n';
+  });
+  triggerDownload(csv, `query_export_${Date.now()}.csv`);
+}
+
+/* ── Apex Execution (Auto-download disabled) ── */
+async function executeApex() {
+  const code = ta().value.trim();
+  if (!code) { ta().focus(); return; }
+  if (!session.sessionId) { alert('Not logged in.'); return; }
+
+  const btn = document.getElementById('btn-exec'); btn.disabled = true;
+  setStatus('sb-run', 'Executing…', true);
+  document.getElementById('out-body').innerHTML = '<div class="empty-state"><div class="empty-ico">⏳</div><span>Calling Salesforce Apex API…</span></div>';
+  document.getElementById('btn-dl').style.display = 'none';
+
+  const t0 = Date.now(), ts = new Date();
+  const category = document.getElementById('LogCategory').value;
+  const level    = document.getElementById('LogLevel').value;
+
+  try {
+    const r = await fetch(`${SERVER}/execute`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, category, level, sessionId: session.sessionId, instanceUrl: session.instanceUrl }),
+    });
+    const elapsed = ((Date.now() - t0) / 1000).toFixed(2) + 's';
+    const data = await r.json();
+
+    if (!r.ok || data.error) throw new Error(data.error || 'Execution failed');
+
+    const output = {
+      mode: 'apex', raw: data, success: data.success,
+      label: data.success ? '✅ Debug Log' : '❌ Execution Failed',
+      meta: '⏱ ' + elapsed, code, category, level, timestamp: ts.toISOString(), elapsed,
+    };
+
+    const activeTab = getActiveTab();
+    if (activeTab) { activeTab.output = output; activeTab.dirty = false; renderTabBar(); }
+
+    document.getElementById('out-label').textContent = output.label;
+    document.getElementById('out-meta').textContent  = output.meta;
+    document.getElementById('btn-dl').style.display  = 'inline-flex';
+
+    renderOutTab(currentOutTab, output);
+    setStatus(data.success ? 'sb-ok' : 'sb-err', data.success ? '✓ Done in ' + elapsed : '✗ Failed');
+
+    addHistoryItem({ mode: 'apex', code, success: data.success, elapsed });
+
+  } catch(err) {
+    document.getElementById('out-body').innerHTML = `<div class="banner b-err">❌ ${esc(err.message)}</div>`;
+    setStatus('sb-err', '✗ ' + err.message.slice(0, 50));
+    addHistoryItem({ mode: 'apex', code, success: false, error: err.message, elapsed: '0s' });
+  } finally { btn.disabled = false; }
+}
+
+/* ── Separate Workspaces Management ── */
+const workspaces = {
+  apex: { tabs: {}, activeTabId: null, counter: 1, defaultPrefix: 'Script ' },
+  soql: { tabs: {}, activeTabId: null, counter: 1, defaultPrefix: 'Query ' },
+  fieldperm: { tabs: {}, activeTabId: null, counter: 1, defaultPrefix: 'Perm ' }
+};
+
+function getWS() { return workspaces[currentMode]; }
+
+function createTab(mode = currentMode, name = '') {
+  const ws = workspaces[mode];
+  const id = ws.counter++;
+  const defaultName = ws.defaultPrefix + id;
+  const defaultCode = mode === 'soql'
+    ? 'SELECT Id, Name, CreatedDate FROM Account LIMIT 10'
+    : '';
+  ws.tabs[id] = { id, name: name || defaultName, code: defaultCode, mode, output: null, dirty: false };
+  return id;
+}
+
+function renderTabBar() {
+  const bar = document.getElementById('tab-bar');
+  bar.querySelectorAll('.tab-item').forEach(el => el.remove());
+  const add = document.getElementById('btn-add-tab');
+  const ws = getWS();
+
+  Object.values(ws.tabs).forEach(t => {
+    const el = document.createElement('div');
+    el.className = 'tab-item' + (t.id === ws.activeTabId ? ' active' : '') + (t.dirty ? ' dirty' : '');
+    el.innerHTML = `<span class="tab-dot"></span><span class="tab-name" title="Double-click to rename: ${esc(t.name)}">${esc(t.name)}</span><button class="tab-x">✕</button>`;
+    el.addEventListener('click', e => { if (!e.target.classList.contains('tab-x')) switchTab(t.id); });
+    el.querySelector('.tab-x').addEventListener('click', e => { e.stopPropagation(); closeTab(t.id); });
+    el.querySelector('.tab-name').addEventListener('dblclick', () => renameTab(t.id));
+    bar.insertBefore(el, add);
+  });
+}
+
+function renameTab(id) {
+  const ws = getWS();
+  const tab = ws.tabs[id];
+  if (!tab) return;
+  const newName = prompt(`Rename ${currentMode === 'soql' ? 'Query' : 'Script'} Tab:`, tab.name);
+  if (newName && newName.trim()) {
+    tab.name = newName.trim();
+    renderTabBar();
+  }
+}
+
+function renameActiveTab() {
+  const tab = getActiveTab();
+  if (tab) renameTab(tab.id);
+}
+
+function switchTab(id, isModeSwitch = false) {
+  const ws = getWS();
+  if (!isModeSwitch && ws.activeTabId && ws.tabs[ws.activeTabId] && ws.activeTabId !== id) {
+    ws.tabs[ws.activeTabId].code = ta().value;
+  }
+  ws.activeTabId = id;
+  const t = ws.tabs[id];
+  if (t) {
+    ta().value = t.code;
+    clearStatus();
+
+    if (t.output) {
+      document.getElementById('out-label').textContent = t.output.label || 'Output';
+      document.getElementById('out-meta').textContent  = t.output.meta  || '';
+      document.getElementById('btn-dl').style.display  = t.output.mode === 'apex' ? 'inline-flex' : 'none';
+      document.getElementById('soql-exports').style.display = t.output.mode === 'soql' ? 'flex' : 'none';
+      renderOutTab(currentOutTab, t.output);
+    } else {
+      document.getElementById('out-label').textContent = 'Output';
+      document.getElementById('out-meta').textContent  = '';
+      document.getElementById('btn-dl').style.display  = 'none';
+      document.getElementById('soql-exports').style.display = 'none';
+      document.getElementById('out-body').innerHTML = '<div class="empty-state"><div class="empty-ico">📭</div><span>No output yet</span></div>';
+    }
+  }
+  renderTabBar();
+  if (cmEditor) setTimeout(() => cmEditor.refresh(), 20);
+}
+
+function addTab() {
+  const ws = getWS();
+  const id = createTab(currentMode);
+  switchTab(id);
+}
+
+function closeTab(id) {
+  const ws = getWS();
+  const k = Object.keys(ws.tabs);
+  if (k.length === 1) return; // Keep at least 1 tab open
+  delete ws.tabs[id];
+  if (ws.activeTabId === id) {
+    const remaining = Object.keys(ws.tabs).map(Number);
+    ws.activeTabId = remaining[remaining.length - 1];
+    switchTab(ws.activeTabId);
+  } else {
+    renderTabBar();
+  }
+}
+
+/* ── Editor Helpers ── */
+let cmEditor = null;
+
+function getCodeValue() {
+  return cmEditor ? cmEditor.getValue() : document.getElementById('code-ta').value;
+}
+function setCodeValue(val) {
+  if (cmEditor) cmEditor.setValue(val || '');
+  else document.getElementById('code-ta').value = val || '';
+  updateGutter();
+}
+
+const ta = () => ({
+  get value() { return getCodeValue(); },
+  set value(v) { setCodeValue(v); },
+  focus() { if (cmEditor) cmEditor.focus(); else document.getElementById('code-ta').focus(); }
+});
+
+function updateGutter() {
+  if (cmEditor) return;
+  const n = document.getElementById('code-ta').value.split('\n').length;
+  document.getElementById('gutter').innerHTML = Array.from({length:n},(_,i)=>i+1).join('<br>');
+}
+
+document.getElementById('code-ta').addEventListener('input', () => {
+  updateGutter();
+  updateSoqlLabel();
+  const tab = getActiveTab(); if (tab) tab.dirty = true;
+  renderTabBar();
+});
+
+document.getElementById('code-ta').addEventListener('keydown', e => {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const el = document.getElementById('code-ta');
+    const s = el.selectionStart, end = el.selectionEnd;
+    el.value = el.value.slice(0,s) + '    ' + el.value.slice(end);
+    el.selectionStart = el.selectionEnd = s + 4;
+    updateGutter();
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); runCurrent(); }
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'F' || e.key === 'f') && currentMode === 'soql') { e.preventDefault(); formatSOQL(); }
+});
+
+function loadSample() {
+  if (currentMode === 'apex') {
+    ta().value = `List<Account> accs = [SELECT Id, Name FROM Account LIMIT 5];\nSystem.debug('Found: ' + accs.size());\nfor(Account a : accs) System.debug('  → ' + a.Name);`;
+  } else {
+    ta().value = `SELECT Id, Name, Type, Industry, Rating, CreatedDate\nFROM Account\nWHERE Rating != NULL\nORDER BY CreatedDate DESC\nLIMIT 10`;
+  }
+  updateGutter(); const tab = getActiveTab(); if (tab) tab.dirty = true; renderTabBar(); ta().focus();
+}
+function clearEditor()  { ta().value = ''; updateGutter(); updateSoqlLabel(); ta().focus(); }
+function resetTab()     { clearEditor(); clearOutput(); clearStatus(); const tab = getActiveTab(); if (tab) { tab.output = null; tab.dirty = false; renderTabBar(); } }
+async function copyCode() { await navigator.clipboard.writeText(ta().value); }
+
+async function updateSoqlLabel() {
+  if (currentMode !== 'soql') return;
+  const match = ta().value.match(/\bFROM\s+([a-zA-Z0-9_]+)/i);
+  const labelEl = document.getElementById('soql-object-label');
+  if (!labelEl) return;
+  if (match) {
+    const objName = match[1];
+    const objects = await getSfObjects();
+    const obj = objects.find(o => o.name.toLowerCase() === objName.toLowerCase());
+    if (obj && obj.label && obj.label.toLowerCase() !== obj.name.toLowerCase()) {
+      labelEl.textContent = `Target: ${obj.label} (${obj.name})`;
+      labelEl.style.display = 'inline-block';
+    } else if (obj) {
+      labelEl.textContent = `Target: ${obj.name}`;
+      labelEl.style.display = 'inline-block';
+    } else {
+      labelEl.style.display = 'none';
+    }
+  } else {
+    labelEl.style.display = 'none';
+  }
+}
+
+/* ── Output Rendering ── */
+let currentOutTab = 'log';
+function switchOutTab(tab) {
+  currentOutTab = tab;
+  document.getElementById('ot-log').classList.toggle('active', tab === 'log');
+  document.getElementById('ot-json').classList.toggle('active', tab === 'json');
+  const t = getActiveTab(); if (t && t.output) renderOutTab(tab, t.output);
+}
+function renderOutTab(tab, output) {
+  if (tab === 'json') renderJSON(output.raw);
+  else if (output.mode === 'soql') renderSOQLTable(output.raw);
+  else renderLog(output.raw);
+}
+
+function renderSOQLTable(data) {
+  const body = document.getElementById('out-body'); body.innerHTML = '';
+  if (!data || !data.records) return;
+
+  if (data.records.length === 0) {
+    body.innerHTML = '<div class="banner b-info">ℹ️ Query returned 0 records.</div>';
+    return;
+  }
+
+  const keys = Object.keys(data.records[0]).filter(k => k !== 'attributes');
+  const hasNext = !!data.nextRecordsUrl;
+  const isLarge = data.totalSize > 50000;
+
+  let html = `<div style="margin-bottom:8px;font-size:11px;color:var(--text2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <span>Showing <b>${data.records.length.toLocaleString()}</b> of <b>${data.totalSize.toLocaleString()}</b> total records found in Salesforce</span>
+    ${hasNext ? `<button class="btn btn-ghost btn-xs" onclick="fetchNextBatch()" style="color:var(--blue);border-color:rgba(2,132,199,0.3);">⏩ Fetch Next Batch (2,000 records)</button>` : ''}
+  </div>`;
+
+  if (isLarge && data.records.length === 2000) {
+    html += `<div class="banner b-info" style="margin-bottom:8px;font-size:11px;">ℹ️ Large Query Alert: Found <b>${data.totalSize.toLocaleString()}</b> records. Loaded initial batch of 2,000 records. Use <b>Fetch Next Batch</b> or export to CSV to process more.</div>`;
+  }
+
+  html += `<div class="result-table-wrap"><table class="data-table"><thead><tr><th>#</th>`;
+  keys.forEach(k => html += `<th>${esc(k)}</th>`);
+  html += `</tr></thead><tbody>`;
+
+  data.records.forEach((r, idx) => {
+    html += `<tr><td style="color:var(--text3)">${idx + 1}</td>`;
+    keys.forEach(k => {
+      const val = typeof r[k] === 'object' ? JSON.stringify(r[k]) : r[k];
+      html += `<td>${esc(val ?? '')}</td>`;
+    });
+    html += `</tr>`;
+  });
+  html += `</tbody></table></div>`;
+  body.innerHTML = html;
+}
+
+async function fetchNextBatch() {
+  const tab = getActiveTab();
+  if (!tab || !tab.output || !tab.output.raw || !tab.output.raw.nextRecordsUrl) return;
+
+  const btn = document.querySelector('#out-body button');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Fetching next batch…'; }
+
+  try {
+    const r = await fetch(`${SERVER}/query/next`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nextRecordsUrl: tab.output.raw.nextRecordsUrl,
+        sessionId: session.sessionId,
+        instanceUrl: session.instanceUrl
+      })
+    });
+    const data = await r.json();
+    if (data.error) { alert('Failed to fetch next batch: ' + data.error); return; }
+
+    tab.output.raw.records = (tab.output.raw.records || []).concat(data.records || []);
+    tab.output.raw.nextRecordsUrl = data.nextRecordsUrl || null;
+    tab.output.raw.done = data.done ?? true;
+
+    renderResultsTable(tab.output.raw);
+  } catch(err) {
+    alert('Error fetching next batch: ' + err.message);
+  }
+}
+
+/* ── Strategy 1: Bulk API 2.0 Export (50M+ Records) ── */
+async function runBulkExport() {
+  const query = ta().value.trim();
+  if (!query) { alert('Please enter a SOQL query first'); return; }
+  if (!session.sessionId) { alert('Not connected to Salesforce'); return; }
+
+  const body = document.getElementById('out-body');
+  body.innerHTML = `
+    <div class="banner b-info" id="bulk-progress-banner">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">🚀 Creating Salesforce Bulk API 2.0 Query Job...</div>
+      <div style="font-size:11px;color:var(--text2);" id="bulk-status-text">Submitting job for: <code>${esc(query.slice(0, 60))}...</code></div>
+    </div>
+  `;
+
+  try {
+    const r = await fetch(`${SERVER}/bulk-query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, sessionId: session.sessionId, instanceUrl: session.instanceUrl })
+    });
+    const data = await r.json();
+    if (data.error) { throw new Error(data.error); }
+
+    const jobId = data.jobId;
+    let attempts = 0;
+
+    const pollInterval = setInterval(async () => {
+      attempts++;
+      try {
+        const sr = await fetch(`${SERVER}/bulk-query/${jobId}?sessionId=${encodeURIComponent(session.sessionId)}&instanceUrl=${encodeURIComponent(session.instanceUrl)}`);
+        const status = await sr.json();
+
+        const processed = (status.numberRecordsProcessed || 0).toLocaleString();
+        const state = status.state || 'Processing';
+        const txtEl = document.getElementById('bulk-status-text');
+        if (txtEl) {
+          txtEl.innerHTML = `Job ID: <code>${jobId}</code> | State: <b>${state}</b> | Records Processed: <b>${processed}</b>`;
+        }
+
+        if (state === 'JobComplete') {
+          clearInterval(pollInterval);
+          const dlUrl = `${SERVER}/bulk-query/${jobId}/download?sessionId=${encodeURIComponent(session.sessionId)}&instanceUrl=${encodeURIComponent(session.instanceUrl)}`;
+          body.innerHTML = `
+            <div class="banner b-ok" style="padding:16px;">
+              <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:var(--green);">✅ Bulk API 2.0 Export Finished Successfully!</div>
+              <div style="font-size:12px;margin-bottom:12px;">Processed <b>${processed}</b> total records in parallel on Salesforce.</div>
+              <a href="${dlUrl}" class="btn btn-exec" download style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;padding:8px 16px;font-weight:600;">
+                ⬇️ Download Complete CSV File (${processed} records)
+              </a>
+            </div>
+          `;
+        } else if (state === 'Failed' || state === 'Aborted') {
+          clearInterval(pollInterval);
+          body.innerHTML = `<div class="banner b-err">❌ Bulk API Job ${state}: ${esc(status.errorMessage || 'Unknown error')}</div>`;
+        }
+      } catch (err) {
+        if (attempts > 100) clearInterval(pollInterval);
+      }
+    }, 2500);
+  } catch (err) {
+    body.innerHTML = `<div class="banner b-err">❌ Failed to start Bulk Export: ${esc(err.message)}</div>`;
+  }
+}
+
+/* ── Strategy 2: Parallel Worker Chunking Export ── */
+async function runParallelExport() {
+  const query = ta().value.trim();
+  if (!query) { alert('Please enter a SOQL query first'); return; }
+  if (!session.sessionId) { alert('Not connected to Salesforce'); return; }
+
+  const startDate = prompt('Enter Start Date (YYYY-MM-DD):', '2023-01-01');
+  if (!startDate) return;
+  const endDate = prompt('Enter End Date (YYYY-MM-DD):', new Date().toISOString().slice(0, 10));
+  if (!endDate) return;
+  const threads = prompt('Enter number of parallel worker threads (1-20):', '8');
+  if (!threads) return;
+
+  const body = document.getElementById('out-body');
+  body.innerHTML = `
+    <div class="banner b-info">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px;">⚡ Running ${threads} Parallel Worker Threads...</div>
+      <div style="font-size:11px;color:var(--text2);">Splitting query by CreatedDate from ${startDate} to ${endDate} across ${threads} workers</div>
+    </div>
+  `;
+
+  try {
+    const r = await fetch(`${SERVER}/parallel-query`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        baseQuery: query,
+        dateField: 'CreatedDate',
+        startDate: `${startDate}T00:00:00Z`,
+        endDate: `${endDate}T23:59:59Z`,
+        threads: parseInt(threads),
+        sessionId: session.sessionId,
+        instanceUrl: session.instanceUrl
+      })
+    });
+    const data = await r.json();
+    if (data.error || !data.success) {
+      throw new Error(data.error || (data.errors ? data.errors.join('; ') : 'Parallel query failed'));
+    }
+
+    const output = {
+      raw: { totalSize: data.totalRecords, records: data.records },
+      success: true,
+      label: `✅ Parallel Export (${data.fetchedRecords} records)`,
+      meta: `⚡ ${data.threads} threads`,
+      query,
+      timestamp: new Date().toISOString()
+    };
+
+    renderResultsTable(output.raw);
+  } catch (err) {
+    body.innerHTML = `<div class="banner b-err">❌ Parallel Export Error: ${esc(err.message)}</div>`;
+  }
+}
+
+function renderLog(data) {
+  const body = document.getElementById('out-body'); body.innerHTML = '';
+  if (!data) return;
+  if (data.compiled === false || data.compiled === null) {
+    const lineNum = (data.line && data.line > 0) ? data.line : null;
+    const loc     = lineNum ? ` — Line ${lineNum}` : '';
+    body.innerHTML += `<div class="banner b-err">⚠️ Compile Error${loc}<br><br><code style="font-size:11px;color:var(--red);white-space:pre-wrap">${esc(data.compileProblem||data.exceptionMessage||'Unknown error')}</code></div>`;
+    return;
+  }
+  if (!data.success) {
+    body.innerHTML += `<div class="banner b-err">❌ Runtime Exception<br><br><code style="font-size:11px;color:var(--red)">${esc(data.exceptionMessage||'')}</code>${data.exceptionStackTrace?`<br><br><pre style="font-size:10px;color:var(--text2);white-space:pre-wrap;margin-top:4px">${esc(data.exceptionStackTrace)}</pre>`:''}</div>`;
+  } else {
+    body.innerHTML += `<div class="banner b-ok">✅ Apex executed successfully</div>`;
+  }
+  const logBody = data.logBody || '';
+  if (logBody) {
+    logBody.split('\n').filter(l => l.trim()).forEach(line => {
+      const p = line.split('|');
+      if (p.length >= 3) {
+        const cls = lc(p[1] + ' ' + p[2]);
+        body.innerHTML += `<div class="log-line"><span class="ll-ts">${esc(p[0].trim())}</span><span class="ll-cat">${esc((p[1]+'|'+p[2]).trim())}</span><span class="ll-msg ${cls}">${esc(p.slice(3).join('|').trim())}</span></div>`;
+      } else {
+        body.innerHTML += `<div class="log-line"><span class="ll-msg ${lc(line)}">${esc(line)}</span></div>`;
+      }
+    });
+  } else if (data.success) {
+    body.innerHTML += `<div class="banner b-info">ℹ️ Execution succeeded but no debug log returned. Try increasing Log Level.</div>`;
+  }
+}
+
+function renderJSON(data) { document.getElementById('out-body').innerHTML = `<pre class="raw-pre">${esc(JSON.stringify(data, null, 2))}</pre>`; }
+
+/* ── History Panel ── */
+function renderSidebarHistory() {
+  const listEl = document.getElementById('sidebar-list'); listEl.innerHTML = '';
+  const query = (document.getElementById('history-search').value || '').toLowerCase();
+  const filtered = historyList.filter(h =>
+    (h.mode === currentMode) && h.code.toLowerCase().includes(query)
+  );
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = `<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">No ${currentMode.toUpperCase()} history yet</div>`;
+    return;
+  }
+
+  filtered.slice(0, 30).forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'sidebar-item';
+    const tagCls = item.mode === 'soql' ? 'tag-soql' : 'tag-apex';
+    const ts = item.timestamp ? new Date(item.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) : '';
+    el.innerHTML = `
+      <div class="si-top">
+        <span class="si-tag ${tagCls}">${item.mode}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="si-ts">${ts}</span>
+          <button class="btn-del-item" title="Delete from history" onclick="deleteHistoryItem(${item.id}, event)">🗑️</button>
+        </div>
+      </div>
+      <div class="si-code" title="${esc(item.code)}">${esc(item.code)}</div>
+    `;
+    el.addEventListener('click', () => {
+      switchMode(item.mode);
+      ta().value = item.code;
+      updateGutter();
+    });
+    listEl.appendChild(el);
+  });
+}
+
+function formatChipText(query) {
+  const clean = (query || '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= 35) return clean;
+
+  const fromMatch = clean.match(/SELECT\s+(.*?)\s+FROM\s+(\w+)(.*)/i);
+  if (fromMatch) {
+    const sObj = fromMatch[2];
+    const rest = fromMatch[3] ? fromMatch[3].trim() : '';
+    if (rest) {
+      const shortRest = rest.length > 16 ? rest.slice(0, 16) + '…' : rest;
+      return `SELECT … FROM ${sObj} ${shortRest}`;
+    }
+    return `SELECT … FROM ${sObj}`;
+  }
+  return clean.slice(0, 32) + '…';
+}
+
+function renderRecentChips() {
+  const chipsList = document.getElementById('chips-list'); chipsList.innerHTML = '';
+  
+  // Deduplicate recent queries by code
+  const soqlItems = [];
+  const seen = new Set();
+  for (const h of historyList) {
+    if (h.mode === 'soql') {
+      const normalized = h.code.trim().toLowerCase();
+      if (!seen.has(normalized)) {
+        seen.add(normalized);
+        soqlItems.push(h);
+        if (soqlItems.length === 5) break;
+      }
+    }
+  }
+
+  if (soqlItems.length === 0) {
+    chipsList.innerHTML = '<span style="font-size:11px;color:var(--text3)">None</span>';
+    return;
+  }
+  soqlItems.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-btn';
+    btn.textContent = formatChipText(item.code);
+    btn.title = item.code;
+    btn.addEventListener('click', () => {
+      switchMode('soql');
+      ta().value = item.code;
+      updateGutter();
+    });
+    chipsList.appendChild(btn);
+  });
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar-panel');
+  sb.style.display = sb.style.display === 'none' ? 'flex' : 'none';
+}
+
+/* ── History Modal ── */
+function openHistoryModal() {
+  document.getElementById('history-modal').classList.add('show');
+  renderModalHistory();
+}
+function closeHistoryModal() { document.getElementById('history-modal').classList.remove('show'); }
+
+function renderModalHistory() {
+  const listEl = document.getElementById('modal-history-list'); listEl.innerHTML = '';
+  const query = (document.getElementById('modal-search').value || '').toLowerCase();
+  const filtered = historyList.filter(h => h.code.toLowerCase().includes(query));
+
+  filtered.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'sidebar-item';
+    el.innerHTML = `
+      <div class="si-top">
+        <span class="si-tag ${item.mode==='soql'?'tag-soql':'tag-apex'}">${item.mode}</span>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="si-ts">${item.timestamp ? new Date(item.timestamp).toLocaleString() : ''}</span>
+          <button class="btn-del-item" title="Delete from history" onclick="deleteHistoryItem(${item.id}, event)">🗑️</button>
+        </div>
+      </div>
+      <pre style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text);white-space:pre-wrap;">${esc(item.code)}</pre>
+    `;
+    el.addEventListener('click', () => {
+      switchMode(item.mode);
+      ta().value = item.code;
+      updateGutter();
+      closeHistoryModal();
+    });
+    listEl.appendChild(el);
+  });
+}
+
+function exportHistoryJson() {
+  triggerDownload(JSON.stringify(historyList, null, 2), `history_export_${Date.now()}.json`);
+}
+
+function deleteHistoryItem(id, e) {
+  if (e) e.stopPropagation();
+  historyList = historyList.filter(h => h.id !== id);
+  saveHistory();
+  renderModalHistory();
+}
+
+function clearAllHistory() {
+  if (confirm('Clear all execution and query history?')) {
+    historyList = []; saveHistory(); closeHistoryModal();
+  }
+}
+
+/* ── Downloads & Copy ── */
+function buildLogTxt(output) {
+  const sep = '═'.repeat(68); const data = output.raw || {};
+  let txt = `${sep}\nLAPEX FLASH LOG\n${sep}\nTimestamp    : ${output.timestamp}\nElapsed      : ${output.elapsed}\nStatus       : ${output.success?'SUCCESS':'FAILED'}\n${sep}\n\n── APEX CODE ──────────────────────────────────────────────\n${output.code}\n\n${sep}\n── RESULT ────────────────────────────────────────\n`;
+  if (data.compiled === false) txt += `COMPILE ERROR at Line ${data.line}\n${data.compileProblem||''}\n`;
+  else if (!data.success) txt += `EXCEPTION: ${data.exceptionMessage||''}\nSTACK:\n${data.exceptionStackTrace||''}\n`;
+  else txt += `SUCCESS\n`;
+  if (data.logBody) txt += `\n── DEBUG LOG ───────────────────────────────────────────────\n${data.logBody}\n`;
+  txt += `\n${sep}\n`; return txt;
+}
+
+function downloadLog() {
+  const tab = getActiveTab(); if (!tab || !tab.output) return;
+  triggerDownload(buildLogTxt(tab.output), `apex-log_${tab.name.replace(/\s+/g,'_')}.txt`);
+}
+
+function triggerDownload(text, filename) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], {type: 'text/plain'}));
+  a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+
+async function copyOutput() { await navigator.clipboard.writeText(document.getElementById('out-body').innerText); }
+function clearOutput() {
+  document.getElementById('out-body').innerHTML = '<div class="empty-state"><div class="empty-ico">📭</div><span>No output yet</span></div>';
+  document.getElementById('out-label').textContent = 'Output'; document.getElementById('out-meta').textContent = '';
+  document.getElementById('btn-dl').style.display = 'none';
+  const tab = getActiveTab(); if (tab) tab.output = null;
+}
+
+function toggleMenu() { document.getElementById('quick-menu').classList.toggle('show'); }
+window.onclick = function(e) { if (!e.target.matches('.btn-ghost')) { const d = document.getElementById('quick-menu'); if (d?.classList.contains('show')) d.classList.remove('show'); } };
+
+function setStatus(cls, msg, showSpin = false) {
+  const b = document.getElementById('status-badge'); b.className = 'status-badge show ' + cls;
+  document.getElementById('spin').style.display = showSpin ? 'block' : 'none';
+  document.getElementById('status-text').textContent = msg;
+}
+function clearStatus() { document.getElementById('status-badge').className = 'status-badge'; }
+
+function lc(s) {
+  if (/USER_DEBUG/i.test(s)) return 'c-user-debug';
+  if (/EXECUTION_STARTED|EXECUTION_FINISHED/i.test(s)) return 'c-exec';
+  if (/CODE_UNIT_STARTED|CODE_UNIT_FINISHED/i.test(s)) return 'c-codeunit';
+  if (/VARIABLE_ASSIGNMENT|VARIABLE_SCOPE/i.test(s)) return 'c-var';
+  if (/FATAL|EXCEPTION|ERROR/i.test(s)) return 'c-error';
+  if (/WARN/i.test(s)) return 'c-warn';
+  if (/USER_INFO/i.test(s)) return 'c-info';
+  if (/FINEST|FINER|FINE|DEBUG/i.test(s)) return 'c-debug';
+  return 'c-def';
+}
+
+/* ── Saved Logs Modal ── */
+async function openSavedLogsModal() {
+  document.getElementById('saved-logs-modal').classList.add('show');
+  await fetchSavedLogs();
+}
+function closeSavedLogsModal() { document.getElementById('saved-logs-modal').classList.remove('show'); }
+
+async function fetchSavedLogs() {
+  const listEl = document.getElementById('saved-logs-list');
+  listEl.innerHTML = '<div style="font-size:11px;color:var(--text3);text-align:center;padding:12px">Loading logs from server folder…</div>';
+  try {
+    const r = await fetch(`${SERVER}/saved-logs`);
+    const data = await r.json();
+    if (data.folderPath) document.getElementById('logs-folder-path').textContent = data.folderPath;
+
+    if (!data.logs || data.logs.length === 0) {
+      listEl.innerHTML = '<div style="font-size:11.5px;color:var(--text3);text-align:center;padding:16px">No saved log files yet in server <code>logs/</code> directory. Run Apex to generate logs!</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    data.logs.forEach(file => {
+      const el = document.createElement('div');
+      el.className = 'sidebar-item';
+      const isOk = file.filename.includes('SUCCESS');
+      const timeStr = new Date(file.mtime).toLocaleString();
+      const kb = (file.size / 1024).toFixed(1) + ' KB';
+      el.innerHTML = `
+        <div class="si-top">
+          <span class="si-tag ${isOk ? 'tag-apex' : 'tag-soql'}" style="${isOk ? '' : 'background:var(--red-dim);color:var(--red);'}">${isOk ? 'SUCCESS' : 'FAILED'}</span>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span class="si-ts">${timeStr} · ${kb}</span>
+            <button class="btn-del-item" title="Delete Saved Log" onclick="deleteSavedLog('${esc(file.filename)}', event)">🗑️</button>
+          </div>
+        </div>
+        <div class="si-code" style="color:var(--text);font-weight:600;">📁 ${esc(file.filename)}</div>
+      `;
+      el.addEventListener('click', () => viewSavedLog(file.filename));
+      listEl.appendChild(el);
+    });
+  } catch (err) {
+    listEl.innerHTML = `<div style="font-size:11.5px;color:var(--red);padding:12px">Error loading logs: ${esc(err.message)}</div>`;
+  }
+}
+
+async function deleteSavedLog(filename, e) {
+  if (e) e.stopPropagation();
+  if (!confirm(`Delete log file "${filename}"?`)) return;
+  try {
+    const r = await fetch(`${SERVER}/saved-logs/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+    const data = await r.json();
+    if (data.success) {
+      await fetchSavedLogs();
+    } else {
+      alert(data.error || 'Failed to delete log file.');
+    }
+  } catch (err) {
+    alert('Error deleting log file: ' + err.message);
+  }
+}
+
+async function deleteAllSavedLogs() {
+  if (!confirm('Are you sure you want to delete ALL saved server logs? This cannot be undone.')) return;
+  try {
+    const r = await fetch(`${SERVER}/saved-logs`, { method: 'DELETE' });
+    const data = await r.json();
+    if (data.success) {
+      await fetchSavedLogs();
+    } else {
+      alert(data.error || 'Failed to delete log files.');
+    }
+  } catch (err) {
+    alert('Error deleting log files: ' + err.message);
+  }
+}
+
+async function viewSavedLog(filename) {
+  try {
+    const r = await fetch(`${SERVER}/saved-logs/${encodeURIComponent(filename)}`);
+    const text = await r.text();
+    closeSavedLogsModal();
+
+    document.getElementById('out-label').textContent = '📄 ' + filename;
+    document.getElementById('out-meta').textContent  = 'Saved Server Log';
+    document.getElementById('btn-dl').style.display  = 'inline-flex';
+
+    const body = document.getElementById('out-body'); body.innerHTML = '';
+    body.innerHTML += `<div class="banner b-info">📁 Loaded from server folder: <code>logs/${esc(filename)}</code></div>`;
+    text.split('\n').forEach(line => {
+      const p = line.split('|');
+      if (p.length >= 3) {
+        const cls = lc(p[1] + ' ' + p[2]);
+        body.innerHTML += `<div class="log-line"><span class="ll-ts">${esc(p[0].trim())}</span><span class="ll-cat">${esc((p[1]+'|'+p[2]).trim())}</span><span class="ll-msg ${cls}">${esc(p.slice(3).join('|').trim())}</span></div>`;
+      } else {
+        body.innerHTML += `<div class="log-line"><span class="ll-msg ${lc(line)}">${esc(line)}</span></div>`;
+      }
+    });
+  } catch (e) {
+    alert('Failed to read log: ' + e.message);
+  }
+}
+
+function esc(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ── Salesforce Field & sObject Autocomplete Engine ── */
+let sfObjectList = null;
+const sfFieldMap = {};
+
+const SOQL_KEYWORDS = [
+  'SELECT', 'FROM', 'WHERE', 'LIMIT', 'OFFSET', 'ORDER BY', 'GROUP BY', 'HAVING',
+  'ASC', 'DESC', 'NULLS FIRST', 'NULLS LAST', 'AND', 'OR', 'NOT', 'IN', 'LIKE',
+  'TYPEOF', 'WITH SECURITY_ENFORCED', 'USING SYSTEM_MODE', 'WITH USER_MODE',
+  'FORMAT', 'CALENDAR_MONTH', 'DAY_ONLY', 'COUNT()', 'AVG()', 'SUM()', 'MAX()', 'MIN()'
+];
+
+async function getSfObjects() {
+  if (sfObjectList) return sfObjectList;
+  if (!session.sessionId || !session.instanceUrl) return [];
+  try {
+    const r = await fetch(`${SERVER}/sobjects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: session.sessionId, instanceUrl: session.instanceUrl })
+    });
+    const res = await r.json();
+    sfObjectList = Array.isArray(res) ? res : [];
+    return sfObjectList;
+  } catch (_) { return []; }
+}
+
+async function getSfFields(sobject) {
+  if (!sobject) return [];
+  const key = sobject.toLowerCase();
+  if (sfFieldMap[key]) return sfFieldMap[key];
+  if (!session.sessionId || !session.instanceUrl) return [];
+  try {
+    const r = await fetch(`${SERVER}/describe`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sobject, sessionId: session.sessionId, instanceUrl: session.instanceUrl })
+    });
+    const data = await r.json();
+    if (data.fields) {
+      sfFieldMap[key] = data.fields;
+      return data.fields;
+    }
+  } catch (_) {}
+  return [];
+}
+
+function isInsideSoqlBracket(docUpToCursor) {
+  const lastOpen = docUpToCursor.lastIndexOf('[');
+  const lastClose = docUpToCursor.lastIndexOf(']');
+  return lastOpen > lastClose && /\bSELECT\b/i.test(docUpToCursor.slice(lastOpen));
+}
+
+function sfAutocompleteHint(cm) {
+  return new Promise(async (resolve) => {
+    const cur = cm.getCursor();
+    const token = cm.getTokenAt(cur);
+    const line = cm.getLine(cur.line);
+    const fullText = cm.getValue();
+
+    // Text up to current cursor (multiline safe)
+    const docUpToCursor = cm.getRange(CodeMirror.Pos(0, 0), cur);
+    const insideSoql = isInsideSoqlBracket(docUpToCursor);
+
+    let word = token.string;
+    let start = token.start;
+    let end = token.end;
+
+    // Handle token boundaries (whitespace, punctuation, etc)
+    if (!/^[a-zA-Z0-9_]+$/.test(word)) {
+      word = '';
+      start = cur.ch;
+      end = cur.ch;
+    }
+
+    const wordLower = word.toLowerCase();
+    const list = [];
+    const addedSet = new Set();
+
+    function addSuggestion(text, typeLabel, label, priority = 0) {
+      const k = text.toLowerCase();
+      if (addedSet.has(k)) return;
+      addedSet.add(k);
+      list.push({
+        text: text,
+        displayText: label ? `${text} — ${label}` : text,
+        priority: priority,
+        render: (el, _self, data) => {
+          el.innerHTML = `<span style="font-weight:600;">${esc(data.text)}</span>${typeLabel ? `<span class="cm-hint-type">${esc(typeLabel)}</span>` : ''}`;
+        }
+      });
+    }
+
+    // 1. Check dot notation: e.g. "Account." or "acc."
+    let isDotNotation = false;
+    let dotParent = '';
+
+    const charBefore = line.charAt(start - 1);
+    if (charBefore === '.') {
+      isDotNotation = true;
+      const prevToken = cm.getTokenAt(CodeMirror.Pos(cur.line, start - 1));
+      if (prevToken && prevToken.string && /^[a-zA-Z0-9_]+$/.test(prevToken.string)) {
+        dotParent = prevToken.string;
+      }
+    }
+
+    // 2. Check if typing immediately after FROM / INTO (multiline aware)
+    const isAfterFrom = /\b(FROM|INTO)\s+([a-zA-Z0-9_]*)$/i.test(docUpToCursor);
+
+    // 3. Find any FROM <SObject> clause in full text or current query
+    let soqlSObject = '';
+    const fromMatches = Array.from(fullText.matchAll(/\bFROM\s+([a-zA-Z0-9_]+)/gi));
+    if (fromMatches.length > 0) {
+      soqlSObject = fromMatches[fromMatches.length - 1][1];
+      getSfFields(soqlSObject); // pre-fetch fields in background
+    }
+
+    // --- CASE 1: Typing after FROM / INTO -> Suggest sObjects ONLY (Salesforce Inspector style) ---
+    if (isAfterFrom) {
+      const sobjects = await getSfObjects();
+      sobjects.forEach(obj => {
+        const nameL = obj.name.toLowerCase();
+        const labelL = (obj.label || '').toLowerCase();
+        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
+          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
+          addSuggestion(obj.name, obj.label || 'sObject', obj.label, starts ? 2 : 1);
+        }
+      });
+    }
+    // --- CASE 2: Dot notation -> Suggest Parent Object Fields (e.g. Account.Name, Owner.Email) ---
+    else if (isDotNotation && dotParent) {
+      let targetObj = dotParent;
+      const parentLower = dotParent.toLowerCase();
+      if (['owner', 'createdby', 'lastmodifiedby'].includes(parentLower)) {
+        targetObj = 'User';
+      }
+      const fields = await getSfFields(targetObj);
+      fields.forEach(f => {
+        const nameL = f.name.toLowerCase();
+        const labelL = (f.label || '').toLowerCase();
+        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
+          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
+          addSuggestion(f.name, `${f.label} · ${f.type}`, f.label, starts ? 2 : 1);
+        }
+      });
+    }
+    // --- CASE 3: In SOQL Query or inside [...] with a FROM <SObject> clause -> Suggest Fields of <SObject> ---
+    else if (soqlSObject && (currentMode === 'soql' || insideSoql)) {
+      const fields = await getSfFields(soqlSObject);
+      fields.forEach(f => {
+        const nameL = f.name.toLowerCase();
+        const labelL = (f.label || '').toLowerCase();
+        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
+          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
+          addSuggestion(f.name, `${f.label} · ${f.type}`, f.label, starts ? 3 : 2);
+        }
+      });
+
+      SOQL_KEYWORDS.forEach(kw => {
+        if (!wordLower || kw.toLowerCase().startsWith(wordLower)) {
+          addSuggestion(kw, 'Keyword', null, 1);
+        }
+      });
+    }
+    // --- CASE 4: Explicit Ctrl-Space in Apex mode outside SOQL ---
+    else if (currentMode === 'soql' || insideSoql || isDotNotation) {
+      const sobjects = await getSfObjects();
+      sobjects.forEach(obj => {
+        const nameL = obj.name.toLowerCase();
+        const labelL = (obj.label || '').toLowerCase();
+        if (!wordLower || nameL.includes(wordLower) || labelL.includes(wordLower)) {
+          const starts = nameL.startsWith(wordLower) || labelL.startsWith(wordLower);
+          addSuggestion(obj.name, obj.label || 'sObject', obj.label, starts ? 2 : 1);
+        }
+      });
+      SOQL_KEYWORDS.forEach(kw => {
+        if (!wordLower || kw.toLowerCase().startsWith(wordLower)) {
+          addSuggestion(kw, 'Keyword', null, 1);
+        }
+      });
+    }
+
+    if (list.length === 0) return resolve(null);
+
+    // Sort by priority (higher priority first), then alphabetically
+    list.sort((a, b) => b.priority - a.priority || a.text.localeCompare(b.text));
+
+    resolve({
+      list: list.slice(0, 150),
+      from: CodeMirror.Pos(cur.line, start),
+      to: CodeMirror.Pos(cur.line, end)
+    });
+  });
+}
+
+function initCodeEditor() {
+  if (typeof CodeMirror !== 'undefined') {
+    const taEl = document.getElementById('code-ta');
+    cmEditor = CodeMirror.fromTextArea(taEl, {
+      mode: 'text/x-java',
+      theme: 'one-dark',
+      lineNumbers: true,
+      styleActiveLine: true,
+      autoCloseBrackets: true,
+      tabSize: 4,
+      indentUnit: 4,
+      extraKeys: {
+        "Ctrl-Space": function(cm) { CodeMirror.showHint(cm, sfAutocompleteHint, { completeSingle: false }); },
+        "Ctrl-Enter": function() { runCurrent(); },
+        "Cmd-Enter": function() { runCurrent(); },
+        "Ctrl-Shift-F": function() { if (currentMode==='soql') formatSOQL(); }
+      }
+    });
+    cmEditor.on('keyup', (cm, e) => {
+      if (e.key === 'Control' || e.key === 'Shift' || e.key === 'Alt' || e.key === 'Enter' || e.key === 'Escape' || e.key === 'Tab' || e.key === 'Backspace') return;
+      
+      const cur = cm.getCursor();
+      const docUpToCursor = cm.getRange(CodeMirror.Pos(0, 0), cur);
+      const line = cm.getLine(cur.line);
+      const token = cm.getTokenAt(cur);
+      const charBefore = line.charAt(token.start - 1);
+
+      // In SOQL Mode: auto-trigger hint on alphanumeric or dot
+      if (currentMode === 'soql') {
+        if (!cm.state.completionActive && e.key.length === 1 && /[a-zA-Z0-9_\.]/.test(e.key)) {
+          CodeMirror.showHint(cm, sfAutocompleteHint, { completeSingle: false });
+        }
+        return;
+      }
+
+      // In Apex Mode: ONLY auto-trigger inside [...] SOQL brackets or after a dot '.'
+      const insideSoql = isInsideSoqlBracket(docUpToCursor);
+      const isDot = charBefore === '.' || e.key === '.';
+      if (insideSoql || isDot) {
+        if (!cm.state.completionActive && e.key.length === 1 && /[a-zA-Z0-9_\.]/.test(e.key)) {
+          CodeMirror.showHint(cm, sfAutocompleteHint, { completeSingle: false });
+        }
+      }
+    });
+    cmEditor.on('change', () => {
+      const tab = getActiveTab();
+      if (tab) tab.dirty = true;
+      updateSoqlLabel();
+      renderTabBar();
+    });
+    const g = document.getElementById('gutter'); if (g) g.style.display = 'none';
+  }
+}
+
+/* ── Theme Switcher ── */
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('theme-light');
+  localStorage.setItem('theme_mode', isLight ? 'light' : 'dark');
+  const btn = document.getElementById('btn-theme');
+  if (btn) btn.textContent = isLight ? '🌙 Dark Mode' : '☀️ Light Mode';
+  if (cmEditor) cmEditor.setOption('theme', isLight ? 'default' : 'one-dark');
+}
+
+function applySavedTheme() {
+  if (localStorage.getItem('theme_mode') === 'light') {
+    document.body.classList.add('theme-light');
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.textContent = '🌙 Dark Mode';
+    if (cmEditor) cmEditor.setOption('theme', 'default');
+  }
+}
+
+/* ── Field Permissions Logic ── */
+async function checkFieldPerms() {
+  const sobject = document.getElementById('fp-sobject').value.trim();
+  const field   = document.getElementById('fp-field').value.trim();
+  if (!sobject || !field) { alert('Please enter both Object and Field (e.g. Account and Account.Industry)'); return; }
+  
+  const query = `SELECT SobjectType, Field, PermissionsRead, PermissionsEdit, Parent.Profile.Name, Parent.Name, Parent.Label FROM FieldPermissions WHERE SobjectType='${sobject}' AND Field='${field}'`;
+  
+  setStatus('sb-run', 'Checking Perms…', true);
+  document.getElementById('out-body').innerHTML = '<div class="empty-state"><div class="empty-ico">⏳</div><span>Checking Field Permissions via Tooling API…</span></div>';
+  
+  try {
+    const r = await fetch(`${SERVER}/query`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, isTooling: false, sessionId: session.sessionId, instanceUrl: session.instanceUrl }),
+    });
+    const data = await r.json();
+    if (!r.ok || data.error) throw new Error(data.error);
+    
+    let html = `<div style="padding:10px;"><h3 style="font-size:14px;color:var(--blue);margin-bottom:10px;">Field Permissions: ${field}</h3>`;
+    html += `<table class="data-table"><tr><th>Profile / PermSet</th><th>Read</th><th>Edit</th></tr>`;
+    data.records.forEach(rec => {
+      const name = rec.Parent.Profile ? `Profile: ${rec.Parent.Profile.Name}` : `PermSet: ${rec.Parent.Label || rec.Parent.Name}`;
+      html += `<tr><td>${name}</td><td>${rec.PermissionsRead ? '✅' : '❌'}</td><td>${rec.PermissionsEdit ? '✅' : '❌'}</td></tr>`;
+    });
+    html += `</table></div>`;
+    
+    document.getElementById('out-body').innerHTML = html;
+    setStatus('sb-ok', `✓ Found ${data.records.length} permission grants`);
+  } catch(err) {
+    document.getElementById('out-body').innerHTML = `<div class="banner b-err">❌ ${esc(err.message)}</div>`;
+    setStatus('sb-err', '✗ Error');
+  }
+}
+
+/* ── Local Metadata Sync & Global Search ── */
+async function syncMetadata() {
+  if (!session.sessionId) return alert('Not logged in!');
+  const btn = document.getElementById('btn-sync-metadata');
+  btn.textContent = '⏳ Syncing...';
+  btn.disabled = true;
+  
+  try {
+    const r = await fetch(`${SERVER}/api/metadata/sync`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionId: session.sessionId, instanceUrl: session.instanceUrl, orgId: session.orgName })
+    });
+    const data = await r.json();
+    if (data.ok) alert('✅ ' + data.message);
+    else alert('❌ Sync failed: ' + data.error);
+  } catch(e) {
+    alert('❌ Request failed: ' + e.message);
+  } finally {
+    btn.textContent = '🔄 Sync Metadata';
+    btn.disabled = false;
+  }
+}
+
+function openGlobalSearch() {
+  document.getElementById('search-modal').classList.add('show');
+  setTimeout(() => document.getElementById('global-search-input').focus(), 100);
+}
+
+function closeGlobalSearch() {
+  document.getElementById('search-modal').classList.remove('show');
+}
+
+async function doGlobalSearch() {
+  const query = document.getElementById('global-search-input').value.trim();
+  if (!query || !session.orgName) return;
+  
+  const resultsDiv = document.getElementById('global-search-results');
+  resultsDiv.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;">Searching locally...</div>';
+  
+  try {
+    const r = await fetch(`${SERVER}/api/search`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, orgId: session.orgName })
+    });
+    const data = await r.json();
+    
+    if (data.results.length === 0) {
+      resultsDiv.innerHTML = '<div style="color:var(--text3);text-align:center;padding:20px;">No results found. (Make sure you synced metadata first!)</div>';
+      return;
+    }
+    
+    let html = '';
+    data.results.forEach(res => {
+      html += `<div style="border-bottom:1px solid var(--border);padding:8px 0;">`;
+      html += `<div style="color:var(--blue);font-weight:600;margin-bottom:4px;">📄 ${esc(res.file)} <span style="color:var(--text3);font-size:10px;">Line ${res.line}</span></div>`;
+      html += `<pre style="color:var(--text2);margin:0;white-space:pre-wrap;">${esc(res.text)}</pre>`;
+      html += `</div>`;
+    });
+    resultsDiv.innerHTML = html;
+  } catch(e) {
+    resultsDiv.innerHTML = `<div class="banner b-err">❌ Search failed: ${esc(e.message)}</div>`;
+  }
+}
+
+/* ── Extension Message Bridge ── */
+window.addEventListener('message', (e) => {
+  if (e.data && e.data.type === 'LAPEX_SESSION_RESPONSE') {
+    const resp = e.data;
+    if (resp && resp.found && resp.sessionId && resp.instanceUrl) {
+      const instInput = document.getElementById('sid-inst');
+      const valInput  = document.getElementById('sid-val');
+      if (instInput && valInput && (!session || !session.sessionId)) {
+        instInput.value = resp.instanceUrl;
+        valInput.value  = resp.sessionId;
+        switchLoginTab('sid');
+        doSidLogin();
+      }
+    }
+  }
+});
+
+function requestExtensionSession() {
+  window.postMessage({ type: 'LAPEX_GET_SESSION' }, '*');
+}
+
+/* ── Init ── */
+(function() {
+  createTab('apex', 'Script 1');
+  createTab('soql', 'Query 1');
+  switchMode('apex');
+  initCodeEditor();
+  applySavedTheme();
+  renderRecentSessions();
+  if (loadSession()) { showExecScreen(); }
+  else {
+    showLoginScreen();
+    requestExtensionSession();
+    setTimeout(() => { autoDetectSessionFromTab(); }, 500);
+  }
+})();
+</script>
+</body>
+</html>
