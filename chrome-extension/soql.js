@@ -109,7 +109,7 @@ async function executeQueryNext() {
     const data = await msg('QUERY_NEXT', {
       sessionId: SF.sessionId, instanceUrl: SF.instanceUrl, nextRecordsUrl: t.output.raw.nextRecordsUrl,
     });
-    if (data.error) { alert('Failed to fetch next batch: ' + data.error); return; }
+    if (data.error) { await showAlert('Failed to fetch next batch: ' + data.error); return; }
 
     t.output.raw.records = (t.output.raw.records || []).concat(data.records || []);
     t.output.raw.nextRecordsUrl = data.nextRecordsUrl || null;

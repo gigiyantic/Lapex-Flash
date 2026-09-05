@@ -22,14 +22,14 @@ async function refreshSyncInfo() {
 }
 
 async function syncMetadataForCurrentOrg() {
-  if (!SF.sessionId || !SF.orgId) { alert('Connect to a Salesforce org first.'); return; }
+  if (!SF.sessionId || !SF.orgId) { await showAlert('Connect to a Salesforce org first.'); return; }
 
   const btn = document.getElementById('btn-sync-metadata');
   btn.disabled = true; btn.textContent = '⏳ Syncing…';
 
   try {
     const data = await msg('SYNC_METADATA', { sessionId: SF.sessionId, instanceUrl: SF.instanceUrl });
-    if (data.error) { alert('Metadata sync failed: ' + data.error); return; }
+    if (data.error) { await showAlert('Metadata sync failed: ' + data.error); return; }
 
     const records = [
       ...data.classes.map(c => ({ type: 'ApexClass', name: c.name, body: c.body })),
@@ -38,7 +38,7 @@ async function syncMetadataForCurrentOrg() {
     await putSources(SF.orgId, records);
     await refreshSyncInfo();
   } catch (err) {
-    alert('Metadata sync failed: ' + err.message);
+    await showAlert('Metadata sync failed: ' + err.message);
   } finally {
     btn.disabled = false; btn.textContent = '🔄 Sync';
   }

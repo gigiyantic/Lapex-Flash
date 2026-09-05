@@ -79,8 +79,8 @@ function renderTabs() {
     el.innerHTML = `<span class="tab-dot"></span><span>${esc(t.name)}</span><button class="tab-x">✕</button>`;
     el.addEventListener('click', e => { if (!e.target.classList.contains('tab-x')) switchTab(t.id); });
     el.querySelector('.tab-x').addEventListener('click', e => { e.stopPropagation(); closeTab(t.id); });
-    el.querySelector('span:nth-child(2)').addEventListener('dblclick', () => {
-      const n = prompt('Rename:', t.name);
+    el.querySelector('span:nth-child(2)').addEventListener('dblclick', async () => {
+      const n = await showPrompt('Rename tab:', t.name);
       if (n?.trim()) { t.name = n.trim(); renderTabs(); }
     });
     bar.insertBefore(el, add);

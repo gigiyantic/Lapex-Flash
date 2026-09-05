@@ -7,7 +7,7 @@ const BULK_POLL_MAX_ATTEMPTS = 100;
 async function runBulkExport() {
   const query = getCode().trim();
   if (!query) { focusEditor(); return; }
-  if (!SF.sessionId) { alert('Not connected to Salesforce.'); return; }
+  if (!SF.sessionId) { await showAlert('Not connected to Salesforce.'); return; }
 
   const body = document.getElementById('out-body');
   body.innerHTML = `

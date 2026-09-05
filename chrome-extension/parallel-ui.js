@@ -4,15 +4,15 @@
 async function runParallelExport() {
   const baseQuery = getCode().trim();
   if (!baseQuery) { focusEditor(); return; }
-  if (!SF.sessionId) { alert('Not connected to Salesforce.'); return; }
+  if (!SF.sessionId) { await showAlert('Not connected to Salesforce.'); return; }
 
-  const dateField = prompt('Date field to split on:', 'CreatedDate');
+  const dateField = await showPrompt('Date field to split on:', 'CreatedDate');
   if (!dateField) return;
-  const startDate = prompt('Start date (YYYY-MM-DD):', '');
+  const startDate = await showPrompt('Start date (YYYY-MM-DD):', '');
   if (!startDate) return;
-  const endDate = prompt('End date (YYYY-MM-DD):', '');
+  const endDate = await showPrompt('End date (YYYY-MM-DD):', '');
   if (!endDate) return;
-  const threads = prompt('Number of parallel worker threads (1-20):', '8');
+  const threads = await showPrompt('Number of parallel worker threads (1-20):', '8');
   if (!threads) return;
 
   const body = document.getElementById('out-body');
