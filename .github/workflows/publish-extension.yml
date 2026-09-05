@@ -1,0 +1,84 @@
+name: Publish Chrome Extension
+
+# Runs whenever chrome-extension/ changes land on main.
+# Zips the extension, uploads a new package to the Chrome Web Store,
+# then publishes it immediately (fully automatic — no manual approval step).
+on:
+  push:
+    branches: [main]
+    paths:
+      - "chrome-extension/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Zip extension
+        working-directory: chrome-extension
+        run: zip -r ../lapex-flash-extension.zip . -x "icons/generate-*.html"
+
+      - name: Get OAuth access token
+        id: token
+        env:
+          CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+          RESPONSE=$(curl -sS -X POST https://oauth2.googleapis.com/token \
+            -d "client_id=${CLIENT_ID}" \
+            -d "client_secret=${CLIENT_SECRET}" \
+            -d "refresh_token=${REFRESH_TOKEN}" \
+            -d "grant_type=refresh_token")
+          ACCESS_TOKEN=$(echo "$RESPONSE" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).access_token')
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "undefined" ]; then
+            echo "Failed to obtain access token. Response was:"
+            echo "$RESPONSE"
+            exit 1
+          fi
+          echo "::add-mask::$ACCESS_TOKEN"
+          echo "access_token=$ACCESS_TOKEN" >> "$GITHUB_OUTPUT"
+
+      - name: Upload new package
+        id: upload
+        env:
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          ACCESS_TOKEN: ${{ steps.token.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          RESPONSE=$(curl -sS -X PUT \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/${EXTENSION_ID}" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "x-goog-api-version: 2" \
+            -T lapex-flash-extension.zip)
+          echo "$RESPONSE"
+          STATE=$(echo "$RESPONSE" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).uploadState')
+          if [ "$STATE" != "SUCCESS" ]; then
+            echo "Upload did not succeed (uploadState=$STATE)"
+            exit 1
+          fi
+
+      - name: Publish
+        env:
+          EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          ACCESS_TOKEN: ${{ steps.token.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          RESPONSE=$(curl -sS -X POST \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/${EXTENSION_ID}/publish" \
+            -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Length: 0")
+          echo "$RESPONSE"
+          STATUS=$(echo "$RESPONSE" | node -pe 'JSON.parse(require("fs").readFileSync(0,"utf8")).status[0]')
+          if [ "$STATUS" != "OK" ] && [ "$STATUS" != "ITEM_PENDING_REVIEW" ]; then
+            echo "Publish did not succeed (status=$STATUS)"
+            exit 1
+          fi
