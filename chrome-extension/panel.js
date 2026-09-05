@@ -271,6 +271,7 @@ document.getElementById('btn-clear-out').addEventListener('click', clearOut);
 
 document.getElementById('mode-apex').addEventListener('click', () => setMode('apex'));
 document.getElementById('mode-soql').addEventListener('click', () => setMode('soql'));
+document.getElementById('mode-fieldperm').addEventListener('click', () => setMode('fieldperm'));
 document.getElementById('btn-load-more').addEventListener('click', executeQueryNext);
 document.getElementById('btn-copy-curl').addEventListener('click', copyAsCurl);
 document.getElementById('btn-copy-md').addEventListener('click', copyAsMarkdown);

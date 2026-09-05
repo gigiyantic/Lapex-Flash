@@ -57,7 +57,7 @@ async function renderHistoryDrawer() {
     <div class="drawer-row" data-id="${esc(e.id)}">
       <div class="drawer-row-main">
         <div class="drawer-row-title">${esc(e.tabName || e.kind)}</div>
-        <div class="drawer-row-sub">${new Date(e.timestamp).toLocaleString()} · ${e.kind === 'soql' ? 'SOQL' : 'Apex'}${e.elapsedMs ? ' · ' + (e.elapsedMs / 1000).toFixed(2) + 's' : ''}</div>
+        <div class="drawer-row-sub">${new Date(e.timestamp).toLocaleString()} · ${e.kind === 'soql' ? 'SOQL' : e.kind === 'fieldperm' ? 'Field Perms' : 'Apex'}${e.elapsedMs ? ' · ' + (e.elapsedMs / 1000).toFixed(2) + 's' : ''}</div>
       </div>
       <span class="tag ${e.success ? 'tag-ok' : 'tag-err'}">${e.success ? 'OK' : 'FAIL'}</span>
       <button class="btn btn-danger btn-xs history-delete" data-id="${esc(e.id)}">✕</button>
@@ -83,11 +83,17 @@ function reopenHistoryEntry(id, list) {
   if (!entry) return;
 
   const tabId = createTab(entry.tabName || 'Reopened');
-  tabs[tabId].mode = entry.kind === 'soql' ? 'soql' : 'apex';
-  tabs[tabId].code = entry.code;
+  tabs[tabId].mode = entry.kind === 'soql' ? 'soql' : entry.kind === 'fieldperm' ? 'fieldperm' : 'apex';
+  tabs[tabId].code = entry.kind === 'fieldperm' ? '' : entry.code;
   renderTabs();
   switchTab(tabId);
   setMode(tabs[tabId].mode);
+
+  if (entry.kind === 'fieldperm' && entry.meta) {
+    document.getElementById('fp-sobject').value = entry.meta.sobject || '';
+    document.getElementById('fp-field').value = entry.meta.field || '';
+  }
+
   closeHistoryDrawer();
 }
 

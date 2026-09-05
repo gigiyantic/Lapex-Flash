@@ -16,24 +16,32 @@ function setMode(mode) {
   const t = activeTabId && tabs[activeTabId];
   if (!t) return;
   t.mode = mode;
-  setEditorMode(mode);
 
   document.getElementById('mode-apex').classList.toggle('active', mode === 'apex');
   document.getElementById('mode-soql').classList.toggle('active', mode === 'soql');
+  document.getElementById('mode-fieldperm').classList.toggle('active', mode === 'fieldperm');
   document.getElementById('cfg-apex').style.display       = mode === 'apex' ? 'flex' : 'none';
   document.getElementById('cfg-apex-level').style.display = mode === 'apex' ? 'flex' : 'none';
   document.getElementById('cfg-soql').style.display        = mode === 'soql' ? 'flex' : 'none';
+  document.getElementById('cfg-fieldperm').style.display    = mode === 'fieldperm' ? 'flex' : 'none';
   document.getElementById('ot-table').style.display         = mode === 'soql' ? 'inline-flex' : 'none';
   document.getElementById('btn-bulk-export').style.display     = mode === 'soql' ? 'inline-flex' : 'none';
   document.getElementById('btn-parallel-export').style.display = mode === 'soql' ? 'inline-flex' : 'none';
-  document.getElementById('btn-exec').textContent = mode === 'apex' ? '▶ Execute' : '▶ Run Query';
+
+  document.querySelector('.editor-wrap').style.display = mode === 'fieldperm' ? 'none' : 'flex';
+  if (mode !== 'fieldperm') setEditorMode(mode);
+
+  document.getElementById('btn-exec').textContent =
+    mode === 'apex' ? '▶ Execute' : mode === 'soql' ? '▶ Run Query' : '▶ Check Perms';
 
   updateSoqlActionButtons();
 }
 
 /** Dispatches Execute / Ctrl-Enter to the right runner for the active tab's mode. */
 function execCurrentMode() {
-  if (getCurrentMode() === 'soql') executeQuery();
+  const mode = getCurrentMode();
+  if (mode === 'soql') executeQuery();
+  else if (mode === 'fieldperm') checkFieldPerms();
   else executeApex();
 }
 
