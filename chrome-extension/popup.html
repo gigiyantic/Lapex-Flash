@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Lapex Flash</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#f8fafc;--panel:#ffffff;--panel2:#f1f5f9;--border:#e2e8f0;--border2:#cbd5e1;
+    --dark-btn:#0f172a;--dark-btn-hover:#1e293b;
+    --blue:#2563eb;--blue-dim:rgba(37,99,235,0.08);
+    --purple:#7c3aed;--purple-dim:rgba(124,58,237,0.08);
+    --yellow:#d97706;--yellow-dim:rgba(217,119,6,0.08);
+    --green:#059669;
+    --red:#dc2626;--red-dim:rgba(220,38,38,0.08);
+    --text:#0f172a;--text2:#334155;--text3:#64748b;
+    --r:7px;--r-lg:12px;
+    --shadow-card:0 1px 3px rgba(0,0,0,0.02),0 8px 24px -4px rgba(15,23,42,0.05);
+  }
+  html,body{background:var(--panel);color:var(--text);font-family:'Plus Jakarta Sans','Inter',sans-serif}
+  body{width:300px;font-size:13px;display:flex;flex-direction:column}
+
+  .pop-header{display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:12px 14px;border-bottom:1px solid var(--border);background:var(--bg)}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:13.5px;letter-spacing:-0.02em;flex-shrink:0}
+  .brand-ico{width:24px;height:24px;border-radius:6px;background:var(--dark-btn);flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;box-shadow:0 2px 8px rgba(15,23,42,0.25)}
+  .org-chip{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text2);min-width:0;
+    background:var(--panel2);border:1px solid var(--border2);border-radius:20px;padding:3px 8px;
+    max-width:130px;overflow:hidden}
+  .org-chip b{color:var(--text);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dot{width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);
+    animation:blink 2s ease-in-out infinite;flex-shrink:0}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .msg-block{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    padding:26px 18px;text-align:center}
+  .state-ico{font-size:28px}
+  .spin{display:inline-block;animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .state-title{font-size:13px;font-weight:700;color:var(--text)}
+  .state-sub{font-size:11.5px;color:var(--text2);line-height:1.6;white-space:pre-line}
+  .nc-err{font-size:11px;color:var(--red);background:var(--red-dim);border:1px solid rgba(220,38,38,.2);
+    border-radius:7px;padding:8px 10px;line-height:1.6;white-space:pre-line;width:100%;text-align:left}
+  .btn-retry{width:100%;background:var(--dark-btn);color:#fff;border:none;border-radius:7px;
+    padding:9px 16px;font-family:'Inter',sans-serif;font-size:12.5px;font-weight:700;cursor:pointer;
+    transition:all .2s;box-shadow:0 2px 10px rgba(15,23,42,.25)}
+  .btn-retry:hover{background:var(--dark-btn-hover)}
+
+  .menu-list{display:flex;flex-direction:column;padding:6px}
+  .menu-sep{height:1px;background:var(--border);margin:6px 8px}
+  .menu-item{display:flex;align-items:center;gap:10px;width:100%;background:transparent;border:none;
+    border-radius:8px;padding:8px 8px;font-family:'Plus Jakarta Sans','Inter',sans-serif;font-size:12.5px;
+    font-weight:600;color:var(--text);cursor:pointer;transition:background .12s;text-align:left}
+  .menu-item:hover{background:var(--panel2)}
+  .menu-ico{width:26px;height:26px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;
+    justify-content:center;font-size:13px}
+  .mi-apex{background:var(--blue-dim);color:var(--blue)}
+  .mi-soql{background:var(--purple-dim);color:var(--purple)}
+  .mi-perm{background:var(--yellow-dim);color:var(--yellow)}
+  .mi-history,.mi-search{background:var(--panel2);color:var(--text2)}
+  .menu-label{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .menu-arrow{color:var(--text3);font-size:14px;flex-shrink:0}
+</style>
+</head>
+<body>
+  <div class="pop-header">
+    <div class="brand"><div class="brand-ico">⚡</div>Lapex Flash</div>
+    <div class="org-chip" id="org-chip" style="display:none"><div class="dot"></div><b id="org-name">—</b></div>
+  </div>
+
+  <div class="msg-block" id="state-detecting">
+    <div class="state-ico spin">⏳</div>
+    <div class="state-sub">Detecting Salesforce session…</div>
+  </div>
+
+  <div class="menu-list" id="menu-list" style="display:none">
+    <button class="menu-item" id="menu-apex" data-mode="apex">
+      <span class="menu-ico mi-apex">⚡</span><span class="menu-label">Apex Execute</span><span class="menu-arrow">›</span>
+    </button>
+    <button class="menu-item" id="menu-soql" data-mode="soql">
+      <span class="menu-ico mi-soql">🔍</span><span class="menu-label">SOQL Query Runner</span><span class="menu-arrow">›</span>
+    </button>
+    <button class="menu-item" id="menu-fieldperm" data-mode="fieldperm">
+      <span class="menu-ico mi-perm">🔐</span><span class="menu-label">Field Permissions</span><span class="menu-arrow">›</span>
+    </button>
+    <div class="menu-sep"></div>
+    <button class="menu-item" id="menu-history" data-open="history">
+      <span class="menu-ico mi-history">📜</span><span class="menu-label">Run History</span><span class="menu-arrow">›</span>
+    </button>
+    <button class="menu-item" id="menu-search" data-open="search">
+      <span class="menu-ico mi-search">🔎</span><span class="menu-label">Code Search</span><span class="menu-arrow">›</span>
+    </button>
+  </div>
+
+  <div class="msg-block" id="state-notfound" style="display:none">
+    <div class="state-ico" style="opacity:.4">🔌</div>
+    <div class="state-title">No Salesforce Session</div>
+    <div class="state-sub">Open any Salesforce tab in Chrome first,
+then click Retry.</div>
+    <div class="nc-err" id="nc-err" style="display:none"></div>
+    <button class="btn-retry" id="btn-retry">🔄 Retry</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

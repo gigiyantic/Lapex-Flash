@@ -13,6 +13,7 @@
 
   "action": {
     "default_title": "Open Lapex Flash",
+    "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
@@ -36,6 +37,16 @@
         "file://*apex-executor.html*"
       ],
       "js": ["content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.salesforce.com/*",
+        "https://*.force.com/*",
+        "https://*.my.salesforce.com/*",
+        "https://*.lightning.force.com/*"
+      ],
+      "js": ["floating-widget.js"],
       "run_at": "document_idle"
     }
   ],

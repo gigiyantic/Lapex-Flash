@@ -24,7 +24,6 @@ function setMode(mode) {
   document.getElementById('cfg-apex-level').style.display = mode === 'apex' ? 'flex' : 'none';
   document.getElementById('cfg-soql').style.display        = mode === 'soql' ? 'flex' : 'none';
   document.getElementById('cfg-fieldperm').style.display    = mode === 'fieldperm' ? 'flex' : 'none';
-  document.getElementById('ot-table').style.display         = mode === 'soql' ? 'inline-flex' : 'none';
   document.getElementById('btn-bulk-export').style.display     = mode === 'soql' ? 'inline-flex' : 'none';
   document.getElementById('btn-parallel-export').style.display = mode === 'soql' ? 'inline-flex' : 'none';
 

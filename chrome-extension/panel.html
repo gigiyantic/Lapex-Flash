@@ -65,6 +65,14 @@
       #btn-history,#btn-history-close{display:none}
     }
 
+    /* mode bar */
+    .mode-bar{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 8px 0;flex-wrap:wrap}
+    .mode-btn{padding:7px 16px;font-size:12.5px;font-weight:600;font-family:'Plus Jakarta Sans','Inter',sans-serif;
+      background:var(--panel);color:var(--text2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;
+      transition:all .15s;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:6px}
+    .mode-btn.active{background:var(--dark-btn);color:var(--btn-text);border-color:var(--dark-btn);box-shadow:0 2px 8px rgba(15,23,42,.2)}
+    .mode-btn:hover:not(.active){color:var(--text);background:var(--panel2)}
+
     /* tab bar */
     .tab-bar{flex-shrink:0;display:flex;align-items:stretch;gap:3px;padding:6px 8px 0;
       background:var(--bg);overflow-x:auto;scrollbar-width:none}
@@ -107,11 +115,6 @@
     li.CodeMirror-hint-active{background:var(--blue-dim);color:var(--blue);font-weight:600}
     .cm-hint-type{float:right;margin-left:12px;font-size:9.5px;color:var(--text3)}
 
-    .mode-toggle{display:flex;gap:5px;flex-shrink:0}
-    .mode-btn{padding:5px 12px;font-size:11px;font-weight:600;font-family:'Plus Jakarta Sans','Inter',sans-serif;
-      background:var(--panel);color:var(--text2);border:1px solid var(--border);border-radius:var(--r);cursor:pointer;transition:all .15s;box-shadow:var(--shadow-sm)}
-    .mode-btn.active{background:var(--dark-btn);color:var(--btn-text);border-color:var(--dark-btn);box-shadow:0 2px 8px rgba(15,23,42,.2)}
-    .mode-btn:hover:not(.active){color:var(--text);background:var(--panel2)}
     .chk-lbl{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text2);cursor:pointer;white-space:nowrap}
 
     .result-summary{margin-bottom:8px;font-size:11px;color:var(--text2);display:flex;
@@ -267,6 +270,13 @@ then click Retry below.</div>
 <div id="screen-main">
 
 <div class="workspace" id="workspace">
+  <!-- Mode Switcher -->
+  <div class="mode-bar">
+    <button class="mode-btn active" id="mode-apex">Apex Execute</button>
+    <button class="mode-btn" id="mode-soql">SOQL Query Runner</button>
+    <button class="mode-btn" id="mode-fieldperm">Field Permissions</button>
+  </div>
+
   <!-- Tabs -->
   <div class="tab-bar" id="tab-bar">
     <button class="tab-add" id="tab-add" title="New tab">+</button>
@@ -280,11 +290,6 @@ then click Retry below.</div>
           placeholder="// Anonymous Apex...&#10;System.debug('Hello!');"></textarea>
       </div>
       <div class="cfg-row">
-        <div class="mode-toggle">
-          <button class="mode-btn active" id="mode-apex">Apex</button>
-          <button class="mode-btn" id="mode-soql">SOQL</button>
-          <button class="mode-btn" id="mode-fieldperm">Field Perms</button>
-        </div>
         <div class="cfg-grp" id="cfg-apex">
           <label>Category:</label>
           <select id="LogCategory" class="sel">
@@ -338,9 +343,8 @@ then click Retry below.</div>
   <!-- Output -->
   <div class="out-section">
     <div class="out-tabs">
-      <button class="out-tab active" id="ot-log">Debug Log</button>
-      <button class="out-tab" id="ot-table" style="display:none">Results</button>
-      <button class="out-tab"        id="ot-json">JSON</button>
+      <button class="out-tab active" id="ot-log">Results / Log</button>
+      <button class="out-tab"        id="ot-json">JSON View</button>
     </div>
     <div class="out-card">
       <div class="out-head">

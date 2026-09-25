@@ -63,9 +63,16 @@ function showMain() {
 let tabIdCounter = 1, activeTabId = null;
 const tabs = {};
 
-function createTab(name) {
+const MODE_TAB_PREFIX = { apex: 'Script', soql: 'Query', fieldperm: 'Perm' };
+const MODE_DEFAULT_CODE = { soql: 'SELECT Id, Name, CreatedDate FROM Account LIMIT 10' };
+
+function createTab(name, mode) {
+  mode = mode || 'apex';
   const id = tabIdCounter++;
-  tabs[id] = { id, name: name || 'Script ' + id, mode: 'apex', code: '', output: null, dirty: false, cat: 'Apex_Code', lvl: 'DEBUG' };
+  tabs[id] = {
+    id, name: name || `${MODE_TAB_PREFIX[mode] || 'Script'} ${id}`, mode,
+    code: MODE_DEFAULT_CODE[mode] || '', output: null, dirty: false, cat: 'Apex_Code', lvl: 'DEBUG',
+  };
   return id;
 }
 
@@ -105,7 +112,7 @@ function switchTab(id) {
     document.getElementById('out-label').textContent = t.output.label || 'Output';
     document.getElementById('out-meta').textContent  = t.output.meta || '';
     document.getElementById('btn-dl').style.display   = 'inline-flex';
-    switchOut(t.output.mode === 'soql' ? 'table' : 'log');
+    switchOut('log');
   } else {
     resetOutputDisplay();
     switchOut('log');
@@ -116,7 +123,7 @@ function switchTab(id) {
   focusEditor();
 }
 
-function addTab() { const id = createTab(); renderTabs(); switchTab(id); }
+function addTab() { const id = createTab(null, getCurrentMode()); renderTabs(); switchTab(id); }
 function closeTab(id) {
   const k = Object.keys(tabs);
   if (k.length === 1) return;
@@ -153,14 +160,13 @@ let currentOut = 'log';
 function switchOut(tab) {
   currentOut = tab;
   document.getElementById('ot-log').classList.toggle('active', tab === 'log');
-  document.getElementById('ot-table').classList.toggle('active', tab === 'table');
   document.getElementById('ot-json').classList.toggle('active', tab === 'json');
   const t = activeTabId && tabs[activeTabId];
   if (t && t.output) renderOutTab(tab, t.output);
 }
 function renderOutTab(tab, output) {
   if (tab === 'json') renderJSON(output.raw);
-  else if (tab === 'table' || output.mode === 'soql') renderResultsTable(output.raw);
+  else if (output.mode === 'soql') renderResultsTable(output.raw);
   else renderLog(output.raw);
 }
 function resetOutputDisplay() {
@@ -266,7 +272,6 @@ document.getElementById('btn-clear-editor').addEventListener('click', clearEdito
 document.getElementById('btn-exec').addEventListener('click', execCurrentMode);
 document.getElementById('btn-reset-tab').addEventListener('click', resetTab);
 document.getElementById('ot-log').addEventListener('click', () => switchOut('log'));
-document.getElementById('ot-table').addEventListener('click', () => switchOut('table'));
 document.getElementById('ot-json').addEventListener('click', () => switchOut('json'));
 document.getElementById('btn-dl').addEventListener('click', downloadLog);
 document.getElementById('btn-copy-out').addEventListener('click', copyOut);
@@ -295,9 +300,20 @@ document.getElementById('search-input').addEventListener('input', onSearchInput)
 /* ── Init ── */
 (function () {
   initEditor(document.getElementById('code-ta'));
-  const id = createTab('Script 1'); activeTabId = id; renderTabs(); setMode('apex');
+  const id = createTab('Script 1'); activeTabId = id; renderTabs();
+
+  // Launched from the toolbar popup's menu list (?mode=soql / ?open=history)
+  // — land directly on the mode or drawer the user picked.
+  const params = new URLSearchParams(location.search);
+  const requestedMode = params.get('mode');
+  setMode(['apex', 'soql', 'fieldperm'].includes(requestedMode) ? requestedMode : 'apex');
+
   refreshSession();
   renderHistoryDrawer(); // pre-populate in case History renders as a permanent sidebar (wide viewport)
+
+  const requestedOpen = params.get('open');
+  if (requestedOpen === 'history') openHistoryDrawer();
+  else if (requestedOpen === 'search') openSearchDrawer();
 
   // chrome.tabs.getCurrent() only resolves to a Tab when this page is
   // running as an actual browser tab (not the side panel) — hide the

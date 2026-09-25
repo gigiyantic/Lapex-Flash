@@ -19,17 +19,36 @@ importScripts(
   'lib/metadata-api.js'
 );
 
-/* ── Open side panel when extension icon is clicked ── */
-chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
+/* ── Auto-detect: badge the toolbar icon as soon as a Salesforce tab
+   finishes loading, so popup.html can show "session ready" instantly
+   instead of re-detecting from a cold start on every click. ── */
+const SF_URL_RE = /https?:\/\/[^/]+\.(salesforce|force)\.com/;
 
-chrome.action.onClicked.addListener(async (tab) => {
+async function refreshBadge() {
   try {
-    await chrome.sidePanel.open({ tabId: tab.id });
+    const session = await getSession();
+    if (session.found) {
+      await chrome.action.setBadgeText({ text: '●' });
+      await chrome.action.setBadgeBackgroundColor({ color: '#059669' });
+    } else {
+      await chrome.action.setBadgeText({ text: '' });
+    }
   } catch (_) {
-    // Fallback for older Chrome: open as new tab
-    chrome.tabs.create({ url: chrome.runtime.getURL('panel.html') });
+    await chrome.action.setBadgeText({ text: '' });
   }
+}
+
+chrome.tabs.onUpdated.addListener((_tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && tab.url && SF_URL_RE.test(tab.url)) refreshBadge();
 });
+chrome.tabs.onActivated.addListener(async ({ tabId }) => {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (tab.url && SF_URL_RE.test(tab.url)) refreshBadge();
+  } catch (_) {}
+});
+chrome.runtime.onStartup.addListener(refreshBadge);
+chrome.runtime.onInstalled.addListener(refreshBadge);
 
 /* ── Message handler ── */
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -51,6 +70,7 @@ if (chrome.runtime.onMessageExternal) {
 async function handleMessage(msg) {
   switch (msg.type) {
     case 'GET_SESSION':           return getSession();
+    case 'OPEN_PANEL_TAB':         return openPanelTab(msg);
     case 'VERIFY':                 return verifySession(msg.sessionId, msg.instanceUrl);
     case 'EXECUTE':                 return executeApex(msg);
     case 'QUERY':                   return runQuery(msg);
@@ -186,6 +206,17 @@ async function getSession() {
   }
 
   return { found: false, error: 'Could not extract a valid session from your open Salesforce tabs.\nMake sure you are logged in to Salesforce and refresh your tab.' };
+}
+
+/* Content scripts (e.g. the floating on-page launcher) can't call
+   chrome.tabs directly — they route through this message instead. */
+async function openPanelTab(msg) {
+  const params = new URLSearchParams();
+  if (msg?.mode) params.set('mode', msg.mode);
+  if (msg?.open) params.set('open', msg.open);
+  const qs = params.toString();
+  await chrome.tabs.create({ url: chrome.runtime.getURL('panel.html' + (qs ? '?' + qs : '')) });
+  return { ok: true };
 }
 
 async function getUserInfo(instanceUrl, sessionId) {
