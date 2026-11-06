@@ -3,45 +3,76 @@
  */
 
 function getCurrentMode() {
-  const t = activeTabId && tabs[activeTabId];
-  return t ? (t.mode || 'apex') : 'apex';
+  return currentMode;
 }
 
 function getActiveOutput() {
-  const t = activeTabId && tabs[activeTabId];
+  const t = getActiveTab();
   return t && t.output ? t.output : null;
 }
 
-function setMode(mode) {
-  const t = activeTabId && tabs[activeTabId];
-  if (!t) return;
-  t.mode = mode;
+const MODE_BUTTONS = {
+  apex: 'mode-apex', soql: 'mode-soql', perms: 'mode-perms',
+  gsearch: 'mode-gsearch', fieldperm: 'mode-fieldperm',
+};
 
-  document.getElementById('mode-apex').classList.toggle('active', mode === 'apex');
-  document.getElementById('mode-soql').classList.toggle('active', mode === 'soql');
-  document.getElementById('mode-fieldperm').classList.toggle('active', mode === 'fieldperm');
+/** Modes that are announced but not built yet — they render the shared
+    "coming soon" card instead of a workspace. */
+const PARKED_MODES = {
+  gsearch: {
+    icon: '🌐', title: 'Global Search',
+    sub: 'Search anything in your org — objects, fields, classes, flows and more. Takes a few hours to sync the first time, then it is instant.',
+  },
+  fieldperm: {
+    icon: '🔐', title: 'Field Permissions',
+    sub: 'Check which profiles and permission sets can read or edit a field. Not available yet — Smart Permissions covers user-level access in the meantime.',
+  },
+};
+
+/** Switches the whole workspace — the editor modes (Apex/SOQL) each own
+    their own tab strip, while Smart Permissions and the parked features
+    replace the editor/output panes with their own screen. */
+function setMode(mode) {
+  saveActiveTabState();
+  currentMode = mode;
+
+  Object.entries(MODE_BUTTONS).forEach(([m, id]) => {
+    document.getElementById(id).classList.toggle('active', m === mode);
+  });
+
+  const parked = PARKED_MODES[mode];
+  const isEditorMode = !parked && mode !== 'perms';
+  document.getElementById('screen-perms').style.display        = mode === 'perms' ? 'flex' : 'none';
+  document.getElementById('screen-coming-soon').style.display  = parked ? 'flex' : 'none';
+  document.getElementById('tab-bar').style.display             = isEditorMode ? 'flex' : 'none';
+  document.querySelector('.editor-section').style.display      = isEditorMode ? 'block' : 'none';
+  document.querySelector('.out-section').style.display         = isEditorMode ? 'flex' : 'none';
+
+  if (parked) {
+    document.getElementById('cs-ico').textContent   = parked.icon;
+    document.getElementById('cs-title').textContent = parked.title;
+    document.getElementById('cs-sub').textContent   = parked.sub;
+    return;
+  }
+  if (mode === 'perms') { document.getElementById('perm-input').focus(); return; }
+
   document.getElementById('cfg-apex').style.display       = mode === 'apex' ? 'flex' : 'none';
   document.getElementById('cfg-apex-level').style.display = mode === 'apex' ? 'flex' : 'none';
   document.getElementById('cfg-soql').style.display        = mode === 'soql' ? 'flex' : 'none';
-  document.getElementById('cfg-fieldperm').style.display    = mode === 'fieldperm' ? 'flex' : 'none';
   document.getElementById('btn-bulk-export').style.display     = mode === 'soql' ? 'inline-flex' : 'none';
   document.getElementById('btn-parallel-export').style.display = mode === 'soql' ? 'inline-flex' : 'none';
+  document.getElementById('btn-exec').textContent = mode === 'apex' ? '▶ Execute' : '▶ Run Query';
+  setEditorMode(mode);
 
-  document.querySelector('.editor-wrap').style.display = mode === 'fieldperm' ? 'none' : 'flex';
-  if (mode !== 'fieldperm') setEditorMode(mode);
-
-  document.getElementById('btn-exec').textContent =
-    mode === 'apex' ? '▶ Execute' : mode === 'soql' ? '▶ Run Query' : '▶ Check Perms';
-
-  updateSoqlActionButtons();
+  const ws = getWS();
+  if (!Object.keys(ws.tabs).length) ws.activeTabId = createTab();
+  loadActiveTab();
 }
 
-/** Dispatches Execute / Ctrl-Enter to the right runner for the active tab's mode. */
+/** Dispatches Execute / Ctrl-Enter to the right runner for the current mode. */
 function execCurrentMode() {
-  const mode = getCurrentMode();
-  if (mode === 'soql') executeQuery();
-  else if (mode === 'fieldperm') checkFieldPerms();
-  else executeApex();
+  if (currentMode === 'soql') executeQuery();
+  else if (currentMode === 'apex') executeApex();
 }
 
 function updateSoqlActionButtons() {
@@ -79,15 +110,16 @@ async function executeQuery() {
       label: `✅ ${data.totalSize.toLocaleString()} record${data.totalSize === 1 ? '' : 's'}`,
       meta: '⏱ ' + elapsed, code: query, isTooling, timestamp: ts.toISOString(), elapsed,
     };
-    if (activeTabId && tabs[activeTabId]) { tabs[activeTabId].output = output; tabs[activeTabId].dirty = false; renderTabs(); }
+    const tab = getActiveTab();
+    if (tab) { tab.output = output; tab.dirty = false; renderTabs(); }
     document.getElementById('out-label').textContent = output.label;
     document.getElementById('out-meta').textContent  = output.meta;
-    switchOut('table');
+    switchOut('log');
     setStatus('sb-ok', '✓ ' + elapsed);
     updateSoqlActionButtons();
 
     pushHistoryEntry({
-      kind: 'soql', tabName: tabs[activeTabId]?.name, code: query, success: true,
+      kind: 'soql', tabName: tab?.name, code: query, success: true,
       elapsedMs: Date.now() - t0,
       meta: { totalSize: data.totalSize, recordCount: data.records.length, isTooling },
       preview: data.records[0] ? JSON.stringify(data.records[0]).slice(0, 500) : '',
@@ -96,7 +128,7 @@ async function executeQuery() {
     document.getElementById('out-body').innerHTML = `<div class="banner b-err">❌ ${esc(err.message)}</div>`;
     setStatus('sb-err', '✗ Error');
     pushHistoryEntry({
-      kind: 'soql', tabName: tabs[activeTabId]?.name, code: query, success: false,
+      kind: 'soql', tabName: getActiveTab()?.name, code: query, success: false,
       elapsedMs: Date.now() - t0, meta: { isTooling }, preview: err.message.slice(0, 500),
     });
     if (err.message.includes('INVALID_SESSION') || err.message.includes('expired')) { SF.sessionId = null; refreshSession(); }
@@ -106,7 +138,7 @@ async function executeQuery() {
 }
 
 async function executeQueryNext() {
-  const t = activeTabId && tabs[activeTabId];
+  const t = getActiveTab();
   if (!t || !t.output || !t.output.raw || !t.output.raw.nextRecordsUrl) return;
 
   const btn = document.getElementById('btn-load-more');

@@ -1,8 +1,8 @@
 /**
  * Lapex Flash — floating launcher docked to the right edge of Salesforce
- * pages. Auto-detects the session on load; clicking the bubble reveals a
- * Launch button that opens the full extension in a new tab. Shadow DOM
- * keeps our styles from colliding with Salesforce's own Lightning CSS.
+ * pages. Auto-detects the session on load (shown as a small status dot);
+ * one click opens the full extension in a new tab. Shadow DOM keeps our
+ * styles from colliding with Salesforce's own Lightning CSS.
  */
 (function () {
   if (window.top !== window.self) return; // skip Lightning's internal iframes
@@ -17,58 +17,58 @@
     <style>
       :host{all:initial}
       *{box-sizing:border-box;font-family:'Segoe UI',Arial,sans-serif}
-      .dock{display:flex;align-items:center;transition:transform .2s ease}
-      .dock.collapsed{transform:translateX(22px)}
-      .bubble{width:44px;height:44px;border-radius:50%;background:#0f172a;color:#fff;
+      .bubble{position:relative;width:44px;height:44px;border-radius:50%;background:#0f172a;color:#fff;
         display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;
-        box-shadow:0 2px 10px rgba(15,23,42,.35);border:2px solid #fff;flex-shrink:0}
-      .bubble .arrow{display:inline-block;transition:transform .2s ease}
-      .dock.collapsed .bubble .arrow{transform:rotate(180deg)}
-      .panel{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #e2e8f0;
-        border-radius:10px 0 0 10px;padding:8px 14px 8px 14px;box-shadow:0 4px 20px rgba(15,23,42,.15);
-        opacity:0;max-width:0;overflow:hidden;transition:all .2s ease;white-space:nowrap}
-      .dock:not(.collapsed) .panel{opacity:1;max-width:260px;margin-right:-8px}
-      .status{display:flex;align-items:center;gap:6px;font-size:12px;color:#334155;font-weight:600}
-      .dot{width:6px;height:6px;border-radius:50%;background:#94a3b8;flex-shrink:0}
+        box-shadow:0 2px 10px rgba(15,23,42,.35);border:2px solid #fff;transform:translateX(22px);
+        transition:transform .2s ease}
+      .bubble:hover{transform:translateX(14px)}
+      .dot{position:absolute;top:-1px;left:-1px;width:10px;height:10px;border-radius:50%;
+        background:#94a3b8;border:2px solid #fff}
       .dot.on{background:#059669;box-shadow:0 0 6px #059669}
-      .launch{background:#0f172a;color:#fff;border:none;border-radius:7px;padding:7px 12px;
-        font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:inherit}
-      .launch:hover:not(:disabled){background:#1e293b}
-      .launch:disabled{opacity:.4;cursor:not-allowed}
+      .dot.stale{background:#dc2626;box-shadow:none}
     </style>
-    <div class="dock collapsed" id="dock">
-      <div class="panel">
-        <span class="status"><span class="dot" id="dot"></span><span id="status-text">Detecting…</span></span>
-        <button class="launch" id="launch-btn" disabled>🚀 Launch</button>
-      </div>
-      <div class="bubble" id="bubble" title="Lapex Flash"><span class="arrow">‹</span></div>
+    <div class="bubble" id="bubble" title="Lapex Flash — click to open">
+      <span class="dot" id="dot"></span>
+      <span class="arrow">‹</span>
     </div>
   `;
 
-  const dock = shadow.getElementById('dock');
   const bubble = shadow.getElementById('bubble');
-  const launchBtn = shadow.getElementById('launch-btn');
   const dot = shadow.getElementById('dot');
-  const statusText = shadow.getElementById('status-text');
 
-  bubble.addEventListener('click', () => dock.classList.toggle('collapsed'));
+  /* Reloading or updating the extension orphans the content scripts
+     already running in open tabs: their chrome.runtime is dead and every
+     call throws "Extension context invalidated". An orphan can never
+     reconnect, so flag it and ask for a page refresh instead of throwing
+     on each click. */
+  function isExtensionAlive() {
+    try { return Boolean(chrome.runtime && chrome.runtime.id); } catch (_) { return false; }
+  }
 
-  launchBtn.addEventListener('click', () => {
-    if (launchBtn.disabled) return;
-    chrome.runtime.sendMessage({ type: 'OPEN_PANEL_TAB' });
-    dock.classList.add('collapsed');
+  function markStale() {
+    dot.classList.remove('on');
+    dot.classList.add('stale');
+    bubble.title = 'Lapex Flash was reloaded — refresh this page to use it again';
+  }
+
+  function send(message, onResponse) {
+    if (!isExtensionAlive()) { markStale(); return; }
+    try {
+      chrome.runtime.sendMessage(message, (resp) => {
+        if (chrome.runtime.lastError) { markStale(); return; }
+        if (onResponse) onResponse(resp);
+      });
+    } catch (_) {
+      markStale();
+    }
+  }
+
+  bubble.addEventListener('click', () => send({ type: 'OPEN_PANEL_TAB' }));
+
+  send({ type: 'GET_SESSION' }, (resp) => {
+    if (resp && resp.found) {
+      dot.classList.add('on');
+      bubble.title = `Lapex Flash — ${resp.name || resp.orgName || 'session ready'}`;
+    }
   });
-
-  try {
-    chrome.runtime.sendMessage({ type: 'GET_SESSION' }, (resp) => {
-      if (chrome.runtime.lastError) return;
-      if (resp && resp.found) {
-        dot.classList.add('on');
-        statusText.textContent = resp.name || resp.orgName || 'Session ready';
-        launchBtn.disabled = false;
-      } else {
-        statusText.textContent = 'No session';
-      }
-    });
-  } catch (_) {}
 })();

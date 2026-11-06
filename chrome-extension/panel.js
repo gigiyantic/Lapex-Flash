@@ -59,19 +59,29 @@ function showMain() {
   focusEditor();
 }
 
-/* ── Tabs ── */
-let tabIdCounter = 1, activeTabId = null;
-const tabs = {};
+/* ── Tabs — one workspace per mode ──────────────────────────────
+   Apex and SOQL each keep their own tab strip and active tab, so
+   switching modes swaps the whole bar instead of mixing scripts and
+   queries together. Field Permissions is parked (coming soon) and
+   owns no workspace. ── */
+const WORKSPACES = {
+  apex: { tabs: {}, activeTabId: null, counter: 0, prefix: 'Script' },
+  soql: { tabs: {}, activeTabId: null, counter: 0, prefix: 'Query' },
+};
+let currentMode = 'apex';
 
-const MODE_TAB_PREFIX = { apex: 'Script', soql: 'Query', fieldperm: 'Perm' };
-const MODE_DEFAULT_CODE = { soql: 'SELECT Id, Name, CreatedDate FROM Account LIMIT 10' };
+function getWS(mode) { return WORKSPACES[mode || currentMode] || null; }
+function getActiveTab() {
+  const ws = getWS();
+  return ws && ws.activeTabId ? ws.tabs[ws.activeTabId] : null;
+}
 
 function createTab(name, mode) {
-  mode = mode || 'apex';
-  const id = tabIdCounter++;
-  tabs[id] = {
-    id, name: name || `${MODE_TAB_PREFIX[mode] || 'Script'} ${id}`, mode,
-    code: MODE_DEFAULT_CODE[mode] || '', output: null, dirty: false, cat: 'Apex_Code', lvl: 'DEBUG',
+  const ws = getWS(mode);
+  const id = ++ws.counter;
+  ws.tabs[id] = {
+    id, name: name || `${ws.prefix} ${id}`, mode: mode || currentMode,
+    code: '', output: null, dirty: false, cat: 'Apex_Code', lvl: 'DEBUG',
   };
   return id;
 }
@@ -80,68 +90,99 @@ function renderTabs() {
   const bar = document.getElementById('tab-bar');
   bar.querySelectorAll('.tab-item').forEach(el => el.remove());
   const add = document.querySelector('.tab-add');
-  Object.values(tabs).forEach(t => {
+  const ws = getWS();
+  if (!ws) return;
+  Object.values(ws.tabs).forEach(t => {
     const el = document.createElement('div');
-    el.className = 'tab-item' + (t.id === activeTabId ? ' active' : '') + (t.dirty ? ' dirty' : '');
+    el.className = 'tab-item' + (t.id === ws.activeTabId ? ' active' : '') + (t.dirty ? ' dirty' : '');
     el.innerHTML = `<span class="tab-dot"></span><span>${esc(t.name)}</span><button class="tab-x">✕</button>`;
     el.addEventListener('click', e => { if (!e.target.classList.contains('tab-x')) switchTab(t.id); });
     el.querySelector('.tab-x').addEventListener('click', e => { e.stopPropagation(); closeTab(t.id); });
     el.querySelector('span:nth-child(2)').addEventListener('dblclick', async () => {
       const n = await showPrompt('Rename tab:', t.name);
-      if (n?.trim()) { t.name = n.trim(); renderTabs(); }
+      if (n?.trim()) { t.name = n.trim(); t.renamed = true; renderTabs(); }
     });
     bar.insertBefore(el, add);
   });
 }
 
-function switchTab(id) {
-  if (activeTabId && tabs[activeTabId]) {
-    tabs[activeTabId].code = getCode();
-    tabs[activeTabId].cat  = document.getElementById('LogCategory').value;
-    tabs[activeTabId].lvl  = document.getElementById('LogLevel').value;
-  }
-  activeTabId = id;
-  const t = tabs[id];
+function saveActiveTabState() {
+  const t = getActiveTab();
+  if (!t) return;
+  t.code = getCode();
+  t.cat  = document.getElementById('LogCategory').value;
+  t.lvl  = document.getElementById('LogLevel').value;
+}
+
+/** Paints editor + output panes from whichever tab is active now. */
+function loadActiveTab() {
+  const t = getActiveTab();
+  if (!t) return;
   setCode(t.code);
   document.getElementById('LogCategory').value = t.cat;
   document.getElementById('LogLevel').value = t.lvl;
-  setMode(t.mode);
   clearStatus();
 
   if (t.output) {
     document.getElementById('out-label').textContent = t.output.label || 'Output';
     document.getElementById('out-meta').textContent  = t.output.meta || '';
     document.getElementById('btn-dl').style.display   = 'inline-flex';
-    switchOut('log');
   } else {
     resetOutputDisplay();
-    switchOut('log');
   }
+  switchOut('log');
   updateSoqlActionButtons();
-
   renderTabs();
   focusEditor();
 }
 
-function addTab() { const id = createTab(null, getCurrentMode()); renderTabs(); switchTab(id); }
+function switchTab(id) {
+  const ws = getWS();
+  if (!ws || !ws.tabs[id]) return;
+  saveActiveTabState();
+  ws.activeTabId = id;
+  loadActiveTab();
+}
+
+function addTab() { const id = createTab(); switchTab(id); }
+
 function closeTab(id) {
-  const k = Object.keys(tabs);
-  if (k.length === 1) return;
-  delete tabs[id];
+  const ws = getWS();
+  if (!ws || Object.keys(ws.tabs).length === 1) return;
+  const wasActive = ws.activeTabId === id;
+  delete ws.tabs[id];
+  if (!wasActive) { renderTabs(); return; }
+  const remaining = Object.keys(ws.tabs);
+  ws.activeTabId = null; // don't flush the editor back into the tab we just closed
+  switchTab(parseInt(remaining[remaining.length - 1], 10));
+}
+
+/** SOQL tabs name themselves after the query's FROM object
+    (SELECT … FROM Account → "Account") until renamed by hand. */
+const SOQL_FROM_RE = /\bFROM\s+([A-Za-z0-9_]+)/i;
+function autoNameActiveTab() {
+  if (currentMode !== 'soql') return;
+  const t = getActiveTab();
+  if (!t || t.renamed) return;
+  const match = getCode().match(SOQL_FROM_RE);
+  const name = match ? match[1] : `${getWS().prefix} ${t.id}`;
+  if (name === t.name) return;
+  t.name = name;
   renderTabs();
-  if (activeTabId === id) { const r = Object.keys(tabs); switchTab(parseInt(r[r.length - 1])); }
 }
 
 /* ── Editor toolbar ── */
 function loadSample() {
   setCode(`List<Account> accs = [SELECT Id, Name FROM Account LIMIT 5];\nSystem.debug('Found: ' + accs.size());\nfor (Account a : accs) System.debug('  → ' + a.Name);`);
-  if (activeTabId && tabs[activeTabId]) { tabs[activeTabId].name = 'Sample'; tabs[activeTabId].dirty = true; renderTabs(); }
+  const t = getActiveTab();
+  if (t) { t.name = 'Sample'; t.renamed = true; t.dirty = true; renderTabs(); }
   focusEditor();
 }
 function clearEditor() { setCode(''); focusEditor(); }
 function resetTab() {
   clearEditor(); resetOutputDisplay(); clearStatus();
-  if (activeTabId && tabs[activeTabId]) { tabs[activeTabId].output = null; tabs[activeTabId].dirty = false; renderTabs(); }
+  const t = getActiveTab();
+  if (t) { t.output = null; t.dirty = false; renderTabs(); }
   updateSoqlActionButtons();
 }
 async function copyCode() { await navigator.clipboard.writeText(getCode()); }
@@ -161,7 +202,7 @@ function switchOut(tab) {
   currentOut = tab;
   document.getElementById('ot-log').classList.toggle('active', tab === 'log');
   document.getElementById('ot-json').classList.toggle('active', tab === 'json');
-  const t = activeTabId && tabs[activeTabId];
+  const t = getActiveTab();
   if (t && t.output) renderOutTab(tab, t.output);
 }
 function renderOutTab(tab, output) {
@@ -177,7 +218,8 @@ function resetOutputDisplay() {
 }
 function clearOut() {
   resetOutputDisplay();
-  if (activeTabId && tabs[activeTabId]) tabs[activeTabId].output = null;
+  const t = getActiveTab();
+  if (t) t.output = null;
   updateSoqlActionButtons();
 }
 
@@ -201,13 +243,14 @@ async function executeApex() {
     if (data.error) throw new Error(data.error);
 
     const output = { mode: 'apex', raw: data, success: data.success, label: data.success ? '✅ Debug Log' : '❌ Failed', meta: '⏱ ' + elapsed, code, category, level, timestamp: ts.toISOString(), elapsed };
-    if (activeTabId && tabs[activeTabId]) { tabs[activeTabId].output = output; tabs[activeTabId].dirty = false; renderTabs(); }
+    const tab = getActiveTab();
+    if (tab) { tab.output = output; tab.dirty = false; renderTabs(); }
     document.getElementById('out-label').textContent = output.label; document.getElementById('out-meta').textContent = output.meta; document.getElementById('btn-dl').style.display = 'inline-flex';
     switchOut('log');
     setStatus(data.success ? 'sb-ok' : 'sb-err', data.success ? '✓ ' + elapsed : '✗ Failed');
 
     pushHistoryEntry({
-      kind: 'apex', tabName: tabs[activeTabId]?.name, code, success: data.success,
+      kind: 'apex', tabName: tab?.name, code, success: data.success,
       elapsedMs: Date.now() - t0, meta: { category, level },
       preview: (data.exceptionMessage || data.compileProblem || '').slice(0, 500),
     });
@@ -216,7 +259,7 @@ async function executeApex() {
   } catch (err) {
     document.getElementById('out-body').innerHTML = `<div class="banner b-err">❌ ${esc(err.message)}</div>`;
     setStatus('sb-err', '✗ Error');
-    pushHistoryEntry({ kind: 'apex', tabName: tabs[activeTabId]?.name, code, success: false, elapsedMs: Date.now() - t0, meta: { category, level }, preview: err.message.slice(0, 500) });
+    pushHistoryEntry({ kind: 'apex', tabName: getActiveTab()?.name, code, success: false, elapsedMs: Date.now() - t0, meta: { category, level }, preview: err.message.slice(0, 500) });
   } finally { btn.disabled = false; }
 }
 
@@ -253,7 +296,7 @@ function buildTxt(output) {
   txt += `\n${sep}\n`; return txt;
 }
 function downloadLog() {
-  const t = activeTabId && tabs[activeTabId]; if (!t || !t.output) return;
+  const t = getActiveTab(); if (!t || !t.output) return;
   dl(buildTxt(t.output), `lapex-log_${t.name.replace(/\s+/g, '_')}.txt`);
 }
 async function copyOut() { await navigator.clipboard.writeText(document.getElementById('out-body').innerText); }
@@ -277,9 +320,13 @@ document.getElementById('btn-dl').addEventListener('click', downloadLog);
 document.getElementById('btn-copy-out').addEventListener('click', copyOut);
 document.getElementById('btn-clear-out').addEventListener('click', clearOut);
 
-document.getElementById('mode-apex').addEventListener('click', () => setMode('apex'));
-document.getElementById('mode-soql').addEventListener('click', () => setMode('soql'));
-document.getElementById('mode-fieldperm').addEventListener('click', () => setMode('fieldperm'));
+Object.entries(MODE_BUTTONS).forEach(([mode, id]) => {
+  document.getElementById(id).addEventListener('click', () => setMode(mode));
+});
+document.getElementById('btn-perm-search').addEventListener('click', runPermissionLookup);
+document.getElementById('perm-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') runPermissionLookup();
+});
 document.getElementById('btn-load-more').addEventListener('click', executeQueryNext);
 document.getElementById('btn-copy-curl').addEventListener('click', copyAsCurl);
 document.getElementById('btn-copy-md').addEventListener('click', copyAsMarkdown);
@@ -300,13 +347,16 @@ document.getElementById('search-input').addEventListener('input', onSearchInput)
 /* ── Init ── */
 (function () {
   initEditor(document.getElementById('code-ta'));
-  const id = createTab('Script 1'); activeTabId = id; renderTabs();
+  onEditorChange(autoNameActiveTab);
+
+  WORKSPACES.apex.activeTabId = createTab(null, 'apex');
+  WORKSPACES.soql.activeTabId = createTab(null, 'soql');
 
   // Launched from the toolbar popup's menu list (?mode=soql / ?open=history)
   // — land directly on the mode or drawer the user picked.
   const params = new URLSearchParams(location.search);
   const requestedMode = params.get('mode');
-  setMode(['apex', 'soql', 'fieldperm'].includes(requestedMode) ? requestedMode : 'apex');
+  setMode(MODE_BUTTONS[requestedMode] ? requestedMode : 'apex');
 
   refreshSession();
   renderHistoryDrawer(); // pre-populate in case History renders as a permanent sidebar (wide viewport)

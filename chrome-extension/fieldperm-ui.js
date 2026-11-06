@@ -4,10 +4,6 @@
  * read/edit a given sObject field. Reuses the existing QUERY message
  * type — no new background.js handler needed.
  */
-function sqlEscape(s) {
-  return s.replace(/'/g, "\\'");
-}
-
 async function checkFieldPerms() {
   const sobject = document.getElementById('fp-sobject').value.trim();
   const field = document.getElementById('fp-field').value.trim();
@@ -46,7 +42,7 @@ async function checkFieldPerms() {
     setStatus('sb-ok', `✓ Found ${data.records.length} grant${data.records.length === 1 ? '' : 's'}`);
 
     pushHistoryEntry({
-      kind: 'fieldperm', tabName: tabs[activeTabId]?.name, code: `${sobject}.${field}`, success: true,
+      kind: 'fieldperm', tabName: getActiveTab()?.name, code: `${sobject}.${field}`, success: true,
       elapsedMs: Date.now() - t0, meta: { sobject, field },
       preview: `${data.records.length} permission grant(s)`,
     });
@@ -54,7 +50,7 @@ async function checkFieldPerms() {
     document.getElementById('out-body').innerHTML = `<div class="banner b-err">❌ ${esc(err.message)}</div>`;
     setStatus('sb-err', '✗ Error');
     pushHistoryEntry({
-      kind: 'fieldperm', tabName: tabs[activeTabId]?.name, code: `${sobject}.${field}`, success: false,
+      kind: 'fieldperm', tabName: getActiveTab()?.name, code: `${sobject}.${field}`, success: false,
       elapsedMs: Date.now() - t0, meta: { sobject, field }, preview: err.message.slice(0, 500),
     });
   } finally {

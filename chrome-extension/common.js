@@ -16,6 +16,11 @@ function esc(s) {
   return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/** Escapes a value for a SOQL string literal (quotes + backslashes). */
+function sqlEscape(s) {
+  return String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
 function lc(s) {
   if (/FATAL|EXCEPTION/i.test(s)) return 'c-error';
   if (/ERROR/i.test(s)) return 'c-error';

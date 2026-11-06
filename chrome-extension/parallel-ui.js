@@ -38,7 +38,7 @@ async function runParallelExport() {
       meta: `${data.threads} threads`,
       code: baseQuery, isTooling: false, timestamp: new Date().toISOString(),
     };
-    if (activeTabId && tabs[activeTabId]) { tabs[activeTabId].output = output; renderTabs(); }
+    { const tab = getActiveTab(); if (tab) { tab.output = output; renderTabs(); } }
     document.getElementById('out-label').textContent = output.label;
     document.getElementById('out-meta').textContent  = output.meta;
     switchOut('table');

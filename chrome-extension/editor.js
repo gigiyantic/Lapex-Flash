@@ -30,6 +30,10 @@ function initEditor(textareaEl) {
   return cmEditor;
 }
 
+function onEditorChange(fn) {
+  cmEditor.on('change', fn);
+}
+
 function getCode() {
   return cmEditor.getValue();
 }

@@ -98,21 +98,16 @@ async function renderHistoryDrawer() {
   });
 }
 
-function reopenHistoryEntry(id, list) {
+async function reopenHistoryEntry(id, list) {
   const entry = list.find(e => e.id === id);
   if (!entry) return;
+  if (entry.kind === 'fieldperm') { await showAlert('Field Permissions is coming soon.'); return; }
 
-  const tabId = createTab(entry.tabName || 'Reopened');
-  tabs[tabId].mode = entry.kind === 'soql' ? 'soql' : entry.kind === 'fieldperm' ? 'fieldperm' : 'apex';
-  tabs[tabId].code = entry.kind === 'fieldperm' ? '' : entry.code;
-  renderTabs();
+  const mode = entry.kind === 'soql' ? 'soql' : 'apex';
+  const tabId = createTab(entry.tabName || 'Reopened', mode);
+  getWS(mode).tabs[tabId].code = entry.code;
+  setMode(mode);
   switchTab(tabId);
-  setMode(tabs[tabId].mode);
-
-  if (entry.kind === 'fieldperm' && entry.meta) {
-    document.getElementById('fp-sobject').value = entry.meta.sobject || '';
-    document.getElementById('fp-field').value = entry.meta.field || '';
-  }
 
   closeHistoryDrawer();
 }

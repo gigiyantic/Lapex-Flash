@@ -72,6 +72,59 @@
       transition:all .15s;box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:6px}
     .mode-btn.active{background:var(--dark-btn);color:var(--btn-text);border-color:var(--dark-btn);box-shadow:0 2px 8px rgba(15,23,42,.2)}
     .mode-btn:hover:not(.active){color:var(--text);background:var(--panel2)}
+    .soon-badge{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;
+      background:rgba(217,119,6,.12);color:var(--yellow);border-radius:10px;padding:2px 6px}
+    .mode-btn.active .soon-badge{background:rgba(255,255,255,.18);color:#fbbf24}
+
+    /* coming-soon screen (Field Permissions) */
+    #screen-coming-soon{flex:1;display:none;align-items:center;justify-content:center;padding:24px;min-height:0}
+    .cs-card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);
+      box-shadow:var(--shadow-card);padding:28px 24px;text-align:center;display:flex;
+      flex-direction:column;align-items:center;gap:10px;max-width:320px}
+    .cs-ico{font-size:34px}
+    .cs-title{font-size:15px;font-weight:800;letter-spacing:-0.02em;color:var(--text)}
+    .cs-badge{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+      background:rgba(217,119,6,.08);color:var(--yellow);border:1px solid rgba(217,119,6,.25);
+      border-radius:20px;padding:3px 10px}
+    .cs-sub{font-size:11.5px;color:var(--text2);line-height:1.6}
+
+    /* Smart Permissions */
+    #screen-perms{flex:1;display:none;flex-direction:column;min-height:0;padding:8px 8px 0}
+    .perm-search{flex-shrink:0;display:flex;gap:6px;align-items:center;margin-bottom:8px}
+    .perm-search .search-input{flex:1}
+    #perm-body{flex:1;overflow-y:auto;padding-bottom:10px}
+    #perm-body::-webkit-scrollbar{width:4px}
+    #perm-body::-webkit-scrollbar-thumb{background:rgba(15,23,42,.15);border-radius:2px}
+    .perm-user{background:var(--panel);border:1px solid var(--border);border-radius:var(--r-lg);
+      box-shadow:var(--shadow-card);padding:12px 14px;margin-bottom:10px}
+    .perm-user-name{font-size:14px;font-weight:800;letter-spacing:-0.02em;color:var(--text);
+      display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+    .perm-user-sub{font-size:11px;color:var(--text3);margin-top:3px;font-family:'JetBrains Mono',monospace}
+    .perm-sec{margin-bottom:10px}
+    .perm-sec-head{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;
+      letter-spacing:.05em;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+    .perm-count{background:var(--panel2);border:1px solid var(--border2);border-radius:10px;
+      padding:1px 7px;font-size:9.5px;color:var(--text3);letter-spacing:0}
+    .perm-row{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+      padding:8px 10px;margin-bottom:4px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow-sm)}
+    .perm-row-stack{align-items:flex-start}
+    .perm-row-main{flex:1;min-width:0}
+    .perm-row-label{font-size:12px;font-weight:600;color:var(--text)}
+    .perm-row-sub{font-size:10.5px;color:var(--text3);margin-top:2px;line-height:1.5;word-break:break-word}
+    .perm-chip{flex-shrink:0;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+      background:var(--blue-dim);color:var(--blue);border-radius:10px;padding:2px 7px}
+    .perm-chip-on{background:var(--green-dim);color:var(--green)}
+    .perm-chip-off{background:var(--red-dim);color:var(--red)}
+    .perm-empty{font-size:11px;color:var(--text3);padding:6px 10px;background:var(--panel2);
+      border:1px dashed var(--border2);border-radius:var(--r)}
+    .perm-picker{display:flex;flex-direction:column;gap:4px}
+    .perm-pick{text-align:left;background:var(--panel);border:1px solid var(--border);border-radius:var(--r);
+      padding:8px 10px;cursor:pointer;font-family:'Plus Jakarta Sans','Inter',sans-serif;
+      transition:all .15s;box-shadow:var(--shadow-sm)}
+    .perm-pick:hover{border-color:var(--blue);background:var(--panel2)}
+    .perm-pick-name{display:block;font-size:12px;font-weight:700;color:var(--text)}
+    .perm-pick-sub{display:block;font-size:10.5px;color:var(--text3);margin-top:2px;
+      font-family:'JetBrains Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
     /* tab bar */
     .tab-bar{flex-shrink:0;display:flex;align-items:stretch;gap:3px;padding:6px 8px 0;
@@ -274,7 +327,9 @@ then click Retry below.</div>
   <div class="mode-bar">
     <button class="mode-btn active" id="mode-apex">Apex Execute</button>
     <button class="mode-btn" id="mode-soql">SOQL Query Runner</button>
-    <button class="mode-btn" id="mode-fieldperm">Field Permissions</button>
+    <button class="mode-btn" id="mode-perms">Smart Permissions</button>
+    <button class="mode-btn" id="mode-gsearch">Global Search<span class="soon-badge">Soon</span></button>
+    <button class="mode-btn" id="mode-fieldperm">Field Permissions<span class="soon-badge">Soon</span></button>
   </div>
 
   <!-- Tabs -->
@@ -367,6 +422,30 @@ then click Retry below.</div>
       </div>
     </div>
   </div>
+
+  <!-- Smart Permissions -->
+  <div id="screen-perms">
+    <div class="perm-search">
+      <input type="text" id="perm-input" class="search-input" placeholder="User name, username or email…" style="margin-bottom:0" />
+      <button class="btn btn-exec" id="btn-perm-search">🔎 Trace Access</button>
+    </div>
+    <div id="perm-body">
+      <div class="empty-state">
+        <div class="empty-ico">🛡️</div>
+        <span>Type a user's name to see every profile, permission set,<br />group and role granting them access.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parked features (Global Search, Field Permissions) -->
+  <div id="screen-coming-soon">
+    <div class="cs-card">
+      <div class="cs-ico" id="cs-ico">🔐</div>
+      <div class="cs-title" id="cs-title">Field Permissions</div>
+      <div class="cs-badge">Coming soon</div>
+      <div class="cs-sub" id="cs-sub"></div>
+    </div>
+  </div>
 </div><!-- /workspace -->
 
   <!-- History drawer -->
@@ -423,6 +502,7 @@ then click Retry below.</div>
 <script src="autocomplete.js"></script>
 <script src="soql.js"></script>
 <script src="fieldperm-ui.js"></script>
+<script src="permissions-ui.js"></script>
 <script src="bulk-ui.js"></script>
 <script src="parallel-ui.js"></script>
 <script src="db.js"></script>
